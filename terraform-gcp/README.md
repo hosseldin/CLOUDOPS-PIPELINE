@@ -92,16 +92,24 @@ The project is structured in the following manner:
 
 ## Usage 🪧
 ## Prerequisites
-### Install Zenity
-Zenity is required to run the graphical interface. Install it using:
-### For RedHat Based 💻:
+### Install Google Cloud
+#### For Debian Based 💻:
+Visit [Google Cloud Platform Debian Installation](https://cloud.google.com/sdk/docs/install#deb) for more information.
+
+Update your system and install some important packages
 ```bash
-sudo yum install zenity
+sudo apt-get install apt-transport-https ca-certificates gnupg curl
 ```
-or
-### For Debian Based 💻:
+
+Import the Google Cloud public key and add the gcloud CLI distribution URI as a package source.
 ```bash
-sudo apt-get install zenity
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+```
+
+Update and install the gcloud CLI
+```bash
+sudo apt-get update && sudo apt-get install google-cloud-cli
 ```
 
 <br>
