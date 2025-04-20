@@ -112,9 +112,37 @@ Update and install the gcloud CLI
 sudo apt-get update && sudo apt-get install google-cloud-cli
 ```
 
+Enable required APIs
+```bash
+gcloud services enable compute.googleapis.com
+```
+
+Create a Service Account for Terraform
+```bash
+gcloud iam service-accounts create terraform --display-name "Terraform Hosa account"
+```
+
+Then bind rules
+```bash
+gcloud projects add-iam-policy-binding summer-gadget-457014-u2 \
+  --member="serviceAccount:terraform@summer-gadget-457014-u2.iam.gserviceaccount.com" \
+  --role="roles/editor"
+```
+
+Create and download service account key
+```bash
+gcloud iam service-accounts keys create ~/gcp-terraform-key.json \
+  --iam-account=terraform@summer-gadget-457014-u2.iam.gserviceaccount.com
+```
+
+Set environment variable for Terraform
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=~/gcp-terraform-key.json
+```
+
 <br>
 
-## To Run the App 🏃🏻
+## To Run the App 🏃🏻bind rules
 You can run the application by running this command: **`./mainMenu.sh`**
 
 <br>
