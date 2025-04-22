@@ -1,9 +1,9 @@
 <h1 align="center">Terraform IaC on GCP Testing Environment</h1>
 
-### This directory contains Terraform provisioning code used to deploy resources on Google Cloud Platform (GCP). The purpose of this setup is to explore and test various GCP services within a controlled, non-production environment.
+### This directory contains Terraform provisioning code used to deploy resources on Amazon Web Services (AWS). The purpose of this setup is to explore and test various AWS services that will be available for production.
 <hr>
 
-![image](terraform-gcp-diagram.jpg)
+![image](terraform-aws-diagram.jpg)
 
 
 
@@ -43,50 +43,15 @@ This project would not have been possible without the valuable contributions of 
 <br>
 
 ## Brief 📃
-This project implements a database system coded in Bash, powered by Zenity GUI.
-The DBMS provides basic operations like creating, reading, updating, and deleting databases/tables. It is implemented in a very user-friendly way, achieving smooth and instant transitions between menu operations.
-
-## Features 🌟
-  - Create Database
-  - View Databases
-  - Drop Database
-  - **Connect to Database**
-    - ***Operations:***
-      - Create Table
-      - View Table
-      - Drop Table
-      - Insert Data into Table
-      - Update Data into Table
-      - Delete Data from Table
-  - Error Handling
-<br>
-
-## Project Structure 🪜
-The project is structured in the following manner:
-
-- **Main Menu APIs**
-  - `mainMenu.sh`
-  - `createDataBase.sh`
-  - `dropDataBase.sh`
-  - `listDataBase.sh`
-  - `connectDatabase.sh`
-  - `connectMenu.sh`
-- **Connect Database Menu APIs**
-  - `createTable.sh`
-  - `deleteFromTable.sh`
-  - `dropTable.sh`
-  - `insertTable.sh`
-  - `listTable.sh`
-  - `pickTable.sh`
-  - `selectFromTable.sh`
-  - `updateTable.sh`
+Build a production-ready, secure DevOps pipeline on AWS, using GitOps practices to automate infrastructure provisioning, application deployment, and secrets management.
 
 <br>
 
 ## Requirements to Run 📃
-- Bash / Zsh Shell
-- Zenity (to enable the GUI interface)
 - Linux-based operating system
+- AWS Account
+- Terraform
+- Jenkins
 
 <br>
 

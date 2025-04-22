@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodeapp
+spec:
+  selector:
+    matchLabels:
+      name: nodeapp
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: nodeapp
+    spec:
+      containers:
+      - name: nodeapp
+        image: mina1402/nodeapp:latest
+        ports:
+          - containerPort: 80
+            name: nodeappport
+        env:
+          - name: MYSQL_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: MYSQL_HOSTNAME
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: MYSQL_USER
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: MYSQL_PASSWORD
+
+          - name: REDIS_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: REDIS_HOSTNAME
