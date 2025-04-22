@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       name: redis
-  replicas: 1
+  replicas: {{ .Values.REDIS_REPLICA_COUNT }}
   template:
     metadata:
       name: redis
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:alpine
+        image: redis:{{ .Values.REDIS_VERSION }}
         ports:
-          - containerPort: 6379
-            name: resdisport
+          - containerPort: {{ .Values.REDIS_PORT}}
+           

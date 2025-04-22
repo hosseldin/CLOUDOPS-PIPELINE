@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       name: db
-  replicas: 1
+  replicas: {{ .Values.MYSQL_REPLICA_COUNT }}
   template:
     metadata:
       labels:
@@ -15,10 +15,9 @@ spec:
     spec:
       containers:
       - name: db
-        image: mysql:8.0
+        image: mysql:{{ .Values.MYSQL_VERSION }}
         ports:
-        - containerPort: 3306
-          name: mysqlport
+        - containerPort: {{ .Values.MYSQL_PORT }}
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -35,8 +34,3 @@ spec:
             secretKeyRef:
               name: nodeapp-secret
               key: MYSQL_PASSWORD
-        # - name: MYSQL_DATABASE
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: nodeapp-secret
-        #       key: database

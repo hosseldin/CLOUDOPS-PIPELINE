@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       name: nodeapp
-  replicas: 1
+  replicas: {{ .Values.APP_REPLICAS_COUNT }}
   template:
     metadata:
       labels:
@@ -16,8 +16,7 @@ spec:
       - name: nodeapp
         image: mina1402/nodeapp:latest
         ports:
-          - containerPort: 80
-            name: nodeappport
+          - containerPort: {{ .Values.NODE_APP_PORT }}
         env:
           - name: MYSQL_HOSTNAME
             valueFrom:

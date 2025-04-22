@@ -6,5 +6,5 @@ spec:
   selector:
     name: redis
   ports:
-  - port: 6379
-    targetPort: resdisport
+  - port: {{ .Values.REDIS_SERVICE_PORT }}
+    targetPort: {{ .Values.REDIS_PORT }}
