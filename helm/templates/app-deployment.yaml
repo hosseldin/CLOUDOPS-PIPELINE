@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodeapp
+spec:
+  selector:
+    matchLabels:
+      name: nodeapp
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: nodeapp
+    spec:
+      containers:
+      - name: nodeapp
+        image: mina1402/nodeapp:latest
+        ports:
+          - containerPort: 3000
+            name: nodeapp
+        env:
+          - name: RDS_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: db_host
+          - name: RDS_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: nodeapp-secret
+          - name: RDS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: RDS_PASSWORD
+          - name: RDS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: RDS_PORT
+          - name: REDIS_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: REDIS_HOSTNAME
+          - name: REDIS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: nodeapp-secret
+                key: REDIS_PORT
