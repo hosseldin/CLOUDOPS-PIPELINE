@@ -1,9 +1,9 @@
 <h1 align="center">Terraform IaC on GCP Testing Environment</h1>
 
-### This directory contains Terraform provisioning code used to deploy resources on Google Cloud Platform (GCP). The purpose of this setup is to explore and test various GCP services within a controlled, non-production environment.
+### This directory contains Terraform provisioning code used to deploy resources on Amazon Web Services (AWS). The purpose of this setup is to explore and test various AWS services that will be available for production.
 <hr>
 
-![image](terraform-gcp-diagram.jpg)
+![image](terraform-aws-diagram.jpg)
 
 
 
