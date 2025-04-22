@@ -6,5 +6,5 @@ spec:
   selector:
     name: db
   ports:
-  - port: 3306
-    targetPort: mysqlport
+  - port: {{ .Values.MYSQL_SERVICE_PORT}}
+    targetPort: {{ .Values.MYSQL_PORT }}

@@ -6,5 +6,5 @@ spec:
   selector:
     name: nodeapp
   ports:
-  - port: 80
-    targetPort: nodeappport
+  - port: {{ .Values.NODE_APP_SERVICE_PORT }}
+    targetPort: {{ .Values.NODE_APP_PORT }}
