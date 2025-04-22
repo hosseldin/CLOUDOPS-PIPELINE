@@ -18,4 +18,4 @@ spec:
         image: redis:alpine
         ports:
           - containerPort: 6379
-            name: redis
+            name: resdisport

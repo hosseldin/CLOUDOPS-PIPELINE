@@ -10,7 +10,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: db
+            name: nodeapp-service
             port:
-              number: 5432
-              
+              number: 80

@@ -16,36 +16,27 @@ spec:
       - name: nodeapp
         image: mina1402/nodeapp:latest
         ports:
-          - containerPort: 3000
-            name: nodeapp
+          - containerPort: 80
+            name: nodeappport
         env:
-          - name: RDS_HOSTNAME
+          - name: MYSQL_HOSTNAME
             valueFrom:
               secretKeyRef:
                 name: nodeapp-secret
-                key: db_host
-          - name: RDS_USERNAME
+                key: MYSQL_HOSTNAME
+          - name: MYSQL_USER
             valueFrom:
               secretKeyRef:
                 name: nodeapp-secret
-                key: nodeapp-secret
-          - name: RDS_PASSWORD
+                key: MYSQL_USER
+          - name: MYSQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: nodeapp-secret
-                key: RDS_PASSWORD
-          - name: RDS_PORT
-            valueFrom:
-              secretKeyRef:
-                name: nodeapp-secret
-                key: RDS_PORT
+                key: MYSQL_PASSWORD
+
           - name: REDIS_HOSTNAME
             valueFrom:
               secretKeyRef:
                 name: nodeapp-secret
                 key: REDIS_HOSTNAME
-          - name: REDIS_PORT
-            valueFrom:
-              secretKeyRef:
-                name: nodeapp-secret
-                key: REDIS_PORT

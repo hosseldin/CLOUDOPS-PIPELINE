@@ -18,25 +18,25 @@ spec:
         image: mysql:8.0
         ports:
         - containerPort: 3306
-          name: db
+          name: mysqlport
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mysql-credentials
-              key: root-password
+              name: nodeapp-secret
+              key: MYSQL_ROOT_PASSWORD
         - name: MYSQL_USER
           valueFrom:
             secretKeyRef:
-              name: mysql-credentials
-              key: username
+              name: nodeapp-secret
+              key: MYSQL_USER
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mysql-credentials
-              key: password
-        - name: MYSQL_DATABASE
-          valueFrom:
-            secretKeyRef:
-              name: mysql-credentials
-              key: database
+              name: nodeapp-secret
+              key: MYSQL_PASSWORD
+        # - name: MYSQL_DATABASE
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: nodeapp-secret
+        #       key: database

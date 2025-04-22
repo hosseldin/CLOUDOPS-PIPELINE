@@ -2,10 +2,10 @@ const express = require('express')
 const app = express()
 const port = process.env.PORT || 80
 
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOSTNAME,
-  user: process.env.MYSQL_USERNAME,
+  user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   port: process.env.MYSQL_PORT || 3306,
 });
