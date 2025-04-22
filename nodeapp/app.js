@@ -1,4 +1,5 @@
 const express = require('express')
+var mysql = require('mysql');
 const app = express()
 const port = process.env.PORT || 80
 
@@ -22,7 +23,6 @@ app.get("/db", (req, res) => {
     connection.release(); // release back to the pool
   });
 });
-
 
 const redis = require('redis');
 const client = redis.createClient({
