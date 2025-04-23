@@ -46,7 +46,7 @@ instances = [
   {
     name           = "hosa-server-1"
     subnet_name    = "hosa-PubSubnet-1"
-    instance_type  = "t2.micro"
+    instance_type  = "t3.micro"
     security_group = ["public-sg"]
   }
 ]
