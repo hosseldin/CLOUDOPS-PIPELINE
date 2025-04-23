@@ -1,21 +1,30 @@
 resource "aws_eks_cluster" "eks" {
   name     = "eks-cluster"
   role_arn = var.cluster_role_arn
-  version  = "1.27"
+  version  = "1.28"
 
-  vpc_config {
-    subnet_ids = var.private_subnets
-    endpoint_private_access = true
-    endpoint_public_access  = false
-    security_group_ids = [aws_security_group.eks_api.id]
+  bootstrap_self_managed_addons = true
+  # storage_config {
 
+  # }
+
+
+  # Enable access entries for authentication
+  access_config {
+    authentication_mode                         = "API_AND_CONFIG_MAP" # or "API" for only Access Entries
+    bootstrap_cluster_creator_admin_permissions = true
   }
 
-  
+  vpc_config {
+    subnet_ids              = var.private_subnets
+    endpoint_private_access = true
+    endpoint_public_access  = false
+    security_group_ids      = [aws_security_group.eks_api.id]
+  }
 
-  depends_on = [
-    var.cluster_role_arn
-  ]
+
+
+  depends_on = [var.cluster_role_arn]
 }
 
 resource "aws_eks_node_group" "nodes" {
@@ -50,4 +59,10 @@ resource "aws_security_group" "eks_api" {
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow all outbound traffic"
   }
+}
+
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = aws_eks_cluster.eks.name
+  addon_name   = "aws-ebs-csi-driver"
+  service_account_role_arn = var.eks_nodes_role_arn
 }

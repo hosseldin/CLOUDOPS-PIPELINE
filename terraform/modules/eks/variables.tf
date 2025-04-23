@@ -20,3 +20,7 @@ variable "vpc_cidr" {
   type = string
   
 }
+
+variable "eks_nodes_role_arn" {
+ type = string 
+}

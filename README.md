@@ -207,3 +207,32 @@ metadata:
 > ~/.aws/config
 > ~/.aws/credentials
 
+
+AmazonEC2ContainerRegistryReadOnly
+
+🔧 What’s Missing or Needs Review:
+1. EBS CSI Driver (for dynamic EBS volumes)
+To support EBS volumes, you need to install the Amazon EBS CSI Driver and grant the required IAM permissions.
+
+You can add this IAM policy to your node role (aws_iam_role.eks_nodes) via an additional attachment:
+
+hcl
+Copy
+Edit
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.eks_nodes.name
+}
+Optionally, enable the driver as an addon:
+
+hcl
+Copy
+Edit
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = aws_eks_cluster.eks.name
+  addon_name   = "aws-ebs-csi-driver"
+  addon_version = "v1.26.0-eksbuild.1" # optional, pick based on compatibility
+  service_account_role_arn = aws_iam_role.eks_nodes.arn
+}
+
+https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
