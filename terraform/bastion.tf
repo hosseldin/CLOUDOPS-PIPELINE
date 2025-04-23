@@ -173,3 +173,21 @@ user_data = <<-EOF
 output "bastion_public_ip" {
   value = aws_instance.bastion.public_ip
 }
+
+resource "aws_eks_access_entry" "admin_access" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn =  aws_iam_role.bastion_role.arn   # Replace with your IAM user/role
+  type          = "STANDARD"  # or "EC2_LINUX" for nodes
+}
+
+
+# Attach AmazonEKSAdminPolicy to the access entry
+resource "aws_eks_access_policy_association" "root_policy" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn  = aws_eks_access_entry.admin_access.principal_arn
+  policy_arn     = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  access_scope {
+    type = "cluster"
+  }
+
+}

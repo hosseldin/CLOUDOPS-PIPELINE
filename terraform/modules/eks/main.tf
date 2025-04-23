@@ -66,3 +66,5 @@ resource "aws_eks_addon" "ebs_csi" {
   addon_name   = "aws-ebs-csi-driver"
   service_account_role_arn = var.eks_nodes_role_arn
 }
+
+
