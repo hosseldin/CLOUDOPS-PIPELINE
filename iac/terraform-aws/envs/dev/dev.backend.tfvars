@@ -20,9 +20,9 @@
 
 # bucket = "hosa-terraform-state"
 bucket = "hosa-statebucket-01"
-region = "eu-north-1"
-# region = "us-east-1"
-key = "development/terraform.tfstate"
+# region = "eu-north-1"
+region = "us-east-1"
+key    = "development/terraform.tfstate"
 
 
 # ==============================================
