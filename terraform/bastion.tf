@@ -40,11 +40,251 @@ resource "aws_iam_role_policy_attachment" "ecr_read_only" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+resource "aws_iam_policy" "iam_policy_admin" {
+  name        = "IAMPolicyManagement"
+  description = "Allows creating, updating, and managing IAM policies"
+  
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "iam:CreatePolicy",
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicy",
+          "iam:DeletePolicyVersion",
+          "iam:GetPolicy",
+          "iam:GetPolicyVersion",
+          "iam:ListPolicyVersions",
+          "iam:ListAttachedRolePolicies",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_iam_policy_admin" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = aws_iam_policy.iam_policy_admin.arn
+}
+
+# Create IAM policy for EKS describe access
+resource "aws_iam_policy" "eks_full_access_for_bastion" {
+  name        = "eks-full-access-for-bastion"
+  description = "Allows all necessary EKS and IAM permissions for bastion operations"
+  policy      = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "eks:DescribeCluster*",
+          "eks:ListClusters"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = [
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = [
+          "iam:CreateServiceAccount",
+          "iam:GetRole",
+          "iam:ListAttachedRolePolicies"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach policy to existing bastion role
+resource "aws_iam_role_policy_attachment" "bastion_eks_describe" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = aws_iam_policy.eks_full_access_for_bastion.arn
+}
+
+resource "aws_iam_policy" "eks_oidc_management" {
+  name        = "eks-oidc-management"
+  description = "Permissions to manage OIDC provider for EKS"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "iam:CreateOpenIDConnectProvider",
+          "iam:DeleteOpenIDConnectProvider",
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders",
+          "iam:TagOpenIDConnectProvider",
+          "iam:UpdateOpenIDConnectProviderThumbprint"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "oidc_management" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = aws_iam_policy.eks_oidc_management.arn
+}
+
+
+# resource "aws_iam_policy" "eks_tagging_permissions" {
+#   name        = "eks-tagging-permissions"
+#   description = "Permissions to tag EKS resources"
+
+#   policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect   = "Allow",
+#         Action   = [
+#           "eks:TagResource",
+#           "eks:UntagResource"
+#         ],
+#         Resource = "arn:aws:eks:us-west-2:214797541313:cluster/eks-cluster"
+#       }
+#     ]
+#   })
+# }
+
+# resource "aws_iam_role_policy_attachment" "eks_tagging" {
+#   role       = aws_iam_role.bastion_role.name
+#   policy_arn = aws_iam_policy.eks_tagging_permissions.arn
+# }
+
+# resource "aws_iam_policy" "cloudformation_read_access" {
+#   name        = "cloudformation-read-access"
+#   description = "Permissions to read CloudFormation stacks"
+
+#   policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect   = "Allow",
+#         Action   = [
+#           "cloudformation:DescribeStacks",
+#           "cloudformation:ListStacks",
+#           "cloudformation:GetTemplate"
+#         ],
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
+
+
+
+# resource "aws_iam_role_policy_attachment" "cloudformation_read" {
+#   role       = aws_iam_role.bastion_role.name
+#   policy_arn = aws_iam_policy.cloudformation_read_access.arn
+# }
+
+
+resource "aws_iam_policy" "eksctl_full_access" {
+  name        = "eksctl-full-access"
+  description = "All permissions needed for eksctl iamserviceaccount operations"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      # EKS permissions
+      {
+        Effect   = "Allow",
+        Action   = [
+          "eks:DescribeCluster*",
+          "eks:ListClusters",
+          "eks:TagResource",
+          "eks:UntagResource"
+        ],
+        Resource = "*"
+      },
+      # IAM OIDC permissions
+      {
+        Effect   = "Allow",
+        Action   = [
+          "iam:CreateOpenIDConnectProvider",
+          "iam:DeleteOpenIDConnectProvider",
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders",
+          "iam:TagOpenIDConnectProvider",
+          "iam:UpdateOpenIDConnectProviderThumbprint"
+        ],
+        Resource = "*"
+      },
+      # CloudFormation permissions
+      {
+        Effect   = "Allow",
+        Action   = [
+          "cloudformation:CreateStack",
+          "cloudformation:DeleteStack",
+          "cloudformation:DescribeStacks",
+          "cloudformation:ListStacks",
+          "cloudformation:GetTemplate",
+          "cloudformation:UpdateStack"
+        ],
+        Resource = "*"
+      },
+      # IAM role permissions
+      {
+        Effect   = "Allow",
+        Action   = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:GetRole",
+          "iam:PassRole",
+          "iam:TagRole",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy"
+        ],
+        Resource = [
+          "arn:aws:iam::214797541313:role/eksctl-*",
+          "arn:aws:iam::214797541313:role/aws-service-role/eks-nodegroup.amazonaws.com/*"
+        ]
+      },
+      # IAM policy permissions
+      {
+        Effect   = "Allow",
+        Action   = [
+          "iam:CreatePolicy",
+          "iam:DeletePolicy",
+          "iam:GetPolicy",
+          "iam:GetPolicyVersion",
+          "iam:ListPolicyVersions"
+        ],
+        Resource = "arn:aws:iam::214797541313:policy/eksctl-*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eksctl_full_access" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = aws_iam_policy.eksctl_full_access.arn
+}
 
 resource "aws_iam_instance_profile" "bastion_instance_profile" {
   name = "bastion-instance-profile"
   role = aws_iam_role.bastion_role.name
 }
+
+
 
 
 

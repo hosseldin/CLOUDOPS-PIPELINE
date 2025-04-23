@@ -176,3 +176,30 @@ The Bonus:
 
 # command to connect your kubectl to eks cluster
 aws eks update-kubeconfig --name eks-cluster --region us-west-2
+https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.12.0/docs/install/iam_policy.j
+
+aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam_policy.json
+
+    
+eksctl utils associate-iam-oidc-provider --region=us-west-2 --cluster=eks-cluster --approve
+
+eksctl create iamserviceaccount \
+    --cluster=eks-cluster \
+    --namespace=kube-system \
+    --name=aws-load-balancer-controller \
+    --attach-policy-arn=arn:aws:iam::214797541313:policy/AWSLoadBalancerControllerIAMPolicy \
+    --override-existing-serviceaccounts \
+    --region us-west-2 \
+    --approve
+
+helm repo add eks https://aws.github.io/eks-
+helm repo update eks
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=my-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller
+
+kubectl get deployment -n kube-system aws-load-balancer-controller
