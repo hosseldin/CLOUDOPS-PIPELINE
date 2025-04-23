@@ -152,6 +152,7 @@ Main Menu:
 - Drop Database
 - test
 - test 
+- test
 
 Up on user Connect to Specific Database, there will be new Screen with this Menu:
 - Create Table 
