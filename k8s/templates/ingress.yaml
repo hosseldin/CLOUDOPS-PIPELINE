@@ -2,6 +2,17 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: db-ingress
+  annotations:
+    # Use the AWS ALB Ingress Controller
+    kubernetes.io/ingress.class: alb
+    # External type for internet-facing ALB
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    # Specify the ALB type (application or network)
+    alb.ingress.kubernetes.io/target-type: ip
+    # (Optional) Specify SSL policy if using HTTPS
+    # alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+    # (Optional) Specify certificate ARN if using HTTPS
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account:certificate/id
 spec:
   rules:
   - http:

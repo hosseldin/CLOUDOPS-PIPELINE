@@ -9,3 +9,14 @@ variable "cluster_role_arn" {
 variable "node_role_arn" {
   type = string
 }
+
+
+variable "vpc_id" {
+  type = string
+  
+}
+
+variable "vpc_cidr" {
+  type = string
+  
+}

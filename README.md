@@ -173,3 +173,37 @@ Hints:
 The Bonus:
 - Make the App to accept SQL Code Instead of Above Menu Based
 - Make GUI of Application 'Plus" the current CLI view
+
+# command to connect your kubectl to eks cluster
+aws eks update-kubeconfig --name eks-cluster --region us-west-2
+
+kubectl edit configmap aws-auth -n kube-system
+
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::214797541313:role/eks-node-group-role
+      username: system:node:{{EC2PrivateDNSName}}
+    - groups:
+      - system:masters
+      rolearn: arn:aws:iam::214797541313:role/bastion-eks-role
+      username: bastion-role
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2025-04-23T10:27:14Z"
+  name: aws-auth
+  namespace: kube-system
+  resourceVersion: "10389"
+  uid: e3ebc629-e4b9-4054-875a-243c17f9872a
+
+
+> ~/.aws/config
+> ~/.aws/credentials
+

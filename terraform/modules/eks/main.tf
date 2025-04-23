@@ -7,7 +7,11 @@ resource "aws_eks_cluster" "eks" {
     subnet_ids = var.private_subnets
     endpoint_private_access = true
     endpoint_public_access  = false
+    security_group_ids = [aws_security_group.eks_api.id]
+
   }
+
+  
 
   depends_on = [
     var.cluster_role_arn
@@ -27,4 +31,23 @@ resource "aws_eks_node_group" "nodes" {
   }
 
   instance_types = ["t3.medium"]
+}
+
+resource "aws_security_group" "eks_api" {
+  vpc_id = var.vpc_id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"  # all protocols
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
+  }
 }
