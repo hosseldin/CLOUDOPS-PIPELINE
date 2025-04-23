@@ -19,6 +19,7 @@
 
 
 bucket = "hosa-terraform-state"
+# region = "eu-north-1"
 region = "us-east-1"
 key    = "development/terraform.tfstate"
 
