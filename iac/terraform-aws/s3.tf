@@ -19,7 +19,7 @@
 
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "hosa-statebucket" # Change this if needed
+  bucket = "hosa-statebucket-01" # Change this if needed
 }
 
 resource "aws_s3_bucket_versioning" "versioning" {
