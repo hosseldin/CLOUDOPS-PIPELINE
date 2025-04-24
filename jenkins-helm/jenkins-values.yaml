@@ -1,37 +1,45 @@
 controller:
-  
+  # Number of Jenkins controller replicas (usually 1 unless HA setup)
   replicas: 1
-  
+
+  # Jenkins controller Docker image config
   image:
-    repository: jenkins/jenkins
-    tag: latest-jdk21
-    pullPolicy: Always
-  
-  javaOpts: "-Xmx1024m -Djenkins.install.runSetupWizard=false"
-  # installPlugins:
-  #   - kubernetes:1.31.3
-  #   - workflow-aggregator:2.6
-  #   - git:4.11.3
-  #   - configuration-as-code:1.55
-  admin.username: "admin"
-  admin.password: "admin"
-  serviceType: NodePort
-  servicePort: 8080  # Jenkins default
-  nodePort: 30600    # Optional: Specify port (30000-32767)
+    repository: jenkins/jenkins     # Official Jenkins image
+    tag: latest-jdk21               # Use the latest version with JDK 21
+    pullPolicy: Always              # Always pull the image (useful for dev/testing)
+
+  # Java options for Jenkins runtime
+  javaOpts: "-Xmx1024m -Djenkins.install.runSetupWizard=false"  # Disable setup wizard for automation
+
+  # Admin credentials for logging into Jenkins UI
+  admin:
+    existingSecret: ""  # leave blank unless you're using a custom secret
+    user: "admin"
+    password: "admin"
+
+  # Expose Jenkins via a NodePort service for Minikube/local access
+  serviceType: NodePort            # Exposes Jenkins outside the cluster
+  servicePort: 8080                # Default Jenkins port
+  nodePort: 30600                  # Accessible on http://<minikube-ip>:30600
 
 agent:
+  # Enable dynamic agents that Jenkins can use to run jobs
   enabled: true
+  # Docker image for Jenkins agents
   image:
-    repository: jenkins/inbound-agent
-    tag: "latest-jdk21"
-    pullPolicy: Always
+    repository: jenkins/inbound-agent  # Official Jenkins agent image
+    tag: "latest-jdk21"                # Use latest with JDK 21
+    pullPolicy: Always                 # Always pull the image
 
 persistence:
+  # Use Persistent Volume for Jenkins home to retain data across restarts
   enabled: true
-  size: 8Gi
+  size: 8Gi                           # Disk size allocated for Jenkins data
 
 rbac:
+  # Create necessary RBAC roles and bindings for Jenkins to interact with the cluster
   create: true
+
 
 
 # To get the admin password
