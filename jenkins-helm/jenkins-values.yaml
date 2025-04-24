@@ -8,6 +8,20 @@ controller:
     tag: latest-jdk21               # Use the latest version with JDK 21
     pullPolicy: Always              # Always pull the image (useful for dev/testing)
 
+  installPlugins:
+    - kubernetes:1.31.3                       # To dynamically provision Jenkins agents as Kubernetes pods
+    - workflow-aggregator:2.6                # Pipeline functionality
+    - git:4.11.3                              # Git SCM support
+    - configuration-as-code:1.55             # Manage Jenkins configuration via YAML
+    - docker-workflow:1.29                   # Docker commands in pipeline (e.g., docker.build)
+    - docker-plugin:1.2.2                    # Allows building Docker containers from jobs
+    - credentials-binding:1.27               # For securely handling secrets in jobs
+    - plain-credentials:1.9                  # Store simple secrets like API tokens
+    - ssh-agent:295.v9ca_a_1c7cc3a_a_         # Enables use of SSH keys in jobs
+    - pipeline-github-lib:38.v445d725d4f42   # For shared pipeline libraries hosted on GitHub
+    - github:1.37.3                          # GitHub integration
+    - docker-commons:1.21                    # Core Docker support shared with other Docker plugins
+
   # Java options for Jenkins runtime
   javaOpts: "-Xmx1024m -Djenkins.install.runSetupWizard=false"  # Disable setup wizard for automation
 
@@ -40,7 +54,11 @@ rbac:
   # Create necessary RBAC roles and bindings for Jenkins to interact with the cluster
   create: true
 
-
+  # installPlugins:
+  #   - kubernetes:1.31.3
+  #   - workflow-aggregator:2.6
+  #   - git:4.11.3
+  #   - configuration-as-code:1.55
 
 # To get the admin password
 # printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo
