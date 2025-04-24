@@ -1,23 +1,30 @@
 controller:
   replicas: 1
-  image: "jenkins/jenkins"
-  tag: "lts-jdk17"
+  image:
+    repository: jenkins/jenkins
+    tag: latest-jdk21
+    pullPolicy: Always
   javaOpts: "-Xmx2048m -Djenkins.install.runSetupWizard=false"
   installPlugins:
     - kubernetes:1.31.3
     - workflow-aggregator:2.6
     - git:4.11.3
     - configuration-as-code:1.55
-  adminUser: "admin"
-  adminPassword: "admin"
+  admin.username: "admin"
+  admin.password: "admin"
   serviceType: LoadBalancer
   servicePort: 80
+
 agent:
   enabled: true
-  image: "jenkins/inbound-agent"
-  tag: "4.11-1-jdk11"
+  image:
+    repository: jenkins/inbound-agent
+    tag: "latest-jdk21"
+    pullPolicy: Always
+
 persistence:
   enabled: true
   size: 8Gi
+
 rbac:
   create: true
