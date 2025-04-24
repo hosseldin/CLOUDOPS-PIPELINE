@@ -1,33 +1,23 @@
 controller:
-  namespaceOverride: cicd
-
+  replicas: 1
   image: "jenkins/jenkins"
   tag: "lts-jdk17"
-
-  installPlugins: []
-  javaOpts: "-Djenkins.install.runSetupWizard=false"
-
-  # ✔ correct key = containerEnv
-  containerEnv:
-    - name: DOCKER_HOST
-      value: tcp://dind.cicd.svc.cluster.local:2375
-    - name: TZ
-      value: Etc/UTC
-
-  persistence:
-    enabled: true
-    storageClass: ""
-    # ✔ correct key = volumeSize
-    volumeSize: 2Gi
-    existingClaim: ""
-
-  serviceType: NodePort
-  servicePort: 8080
-  nodePort: 30080
-
-  serviceAccount:
-    create: false
-    name: jenkins-sa
-
+  javaOpts: "-Xmx2048m -Djenkins.install.runSetupWizard=false"
+  installPlugins:
+    - kubernetes:1.31.3
+    - workflow-aggregator:2.6
+    - git:4.11.3
+    - configuration-as-code:1.55
+  adminUser: "admin"
+  adminPassword: "admin"
+  serviceType: LoadBalancer
+  servicePort: 80
 agent:
-  enabled: false
+  enabled: true
+  image: "jenkins/inbound-agent"
+  tag: "4.11-1-jdk11"
+persistence:
+  enabled: true
+  size: 8Gi
+rbac:
+  create: true
