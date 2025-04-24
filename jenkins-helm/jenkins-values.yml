@@ -1,0 +1,39 @@
+controller:
+  # run as Deployment in the cicd namespace
+  namespaceOverride: cicd
+
+  # use the LTS image
+  image: "jenkins/jenkins"
+  tag: "lts-jdk17"
+
+  # disable setup wizard for automation
+  installPlugins: []
+  javaOpts: "-Djenkins.install.runSetupWizard=false"
+
+  # environment variable so Docker CLI points at DinD
+  env:
+    - name: DOCKER_HOST
+      value: tcp://dind.cicd.svc.cluster.local:2375
+    - name: TZ
+      value: Etc/UTC
+
+  # mount an 8 Gi emptyDir for Jenkins home (simple demo)
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 2Gi
+    existingClaim: ""   # leave blank to let the chart create its own PVC
+
+  # Service type NodePort for Minikube convenience
+  serviceType: NodePort
+  servicePort: 8080
+  nodePort: 30080       # choose any free NodePort
+
+  # Minimal RBAC (we created jenkins-sa earlier, reuse it)
+  serviceAccount:
+    create: false
+    name: jenkins-sa
+
+agent:
+  # disable built‑in agent images – we’ll just run builds on the controller pod for now
+  enabled: false
