@@ -150,6 +150,9 @@ Main Menu:
 - List Databases
 - Connect To Databases
 - Drop Database
+- test
+- test 
+- test
 
 Up on user Connect to Specific Database, there will be new Screen with this Menu:
 - Create Table 
@@ -176,63 +179,30 @@ The Bonus:
 
 # command to connect your kubectl to eks cluster
 aws eks update-kubeconfig --name eks-cluster --region us-west-2
+https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.12.0/docs/install/iam_policy.j
 
-kubectl edit configmap aws-auth -n kube-system
+aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam_policy.json
 
-# Please edit the object below. Lines beginning with a '#' will be ignored,
-# and an empty file will abort the edit. If an error occurs while saving this file will be
-# reopened with the relevant failures.
-#
-apiVersion: v1
-data:
-  mapRoles: |
-    - groups:
-      - system:bootstrappers
-      - system:nodes
-      rolearn: arn:aws:iam::214797541313:role/eks-node-group-role
-      username: system:node:{{EC2PrivateDNSName}}
-    - groups:
-      - system:masters
-      rolearn: arn:aws:iam::214797541313:role/bastion-eks-role
-      username: bastion-role
-kind: ConfigMap
-metadata:
-  creationTimestamp: "2025-04-23T10:27:14Z"
-  name: aws-auth
-  namespace: kube-system
-  resourceVersion: "10389"
-  uid: e3ebc629-e4b9-4054-875a-243c17f9872a
+    
+eksctl utils associate-iam-oidc-provider --region=us-west-2 --cluster=eks-cluster --approve
 
+eksctl create iamserviceaccount \
+    --cluster=eks-cluster \
+    --namespace=kube-system \
+    --name=aws-load-balancer-controller \
+    --attach-policy-arn=arn:aws:iam::214797541313:policy/AWSLoadBalancerControllerIAMPolicy \
+    --override-existing-serviceaccounts \
+    --region us-west-2 \
+    --approve
 
-> ~/.aws/config
-> ~/.aws/credentials
+helm repo add eks https://aws.github.io/eks-
+helm repo update eks
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=my-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller
 
-
-AmazonEC2ContainerRegistryReadOnly
-
-🔧 What’s Missing or Needs Review:
-1. EBS CSI Driver (for dynamic EBS volumes)
-To support EBS volumes, you need to install the Amazon EBS CSI Driver and grant the required IAM permissions.
-
-You can add this IAM policy to your node role (aws_iam_role.eks_nodes) via an additional attachment:
-
-hcl
-Copy
-Edit
-resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.eks_nodes.name
-}
-Optionally, enable the driver as an addon:
-
-hcl
-Copy
-Edit
-resource "aws_eks_addon" "ebs_csi" {
-  cluster_name = aws_eks_cluster.eks.name
-  addon_name   = "aws-ebs-csi-driver"
-  addon_version = "v1.26.0-eksbuild.1" # optional, pick based on compatibility
-  service_account_role_arn = aws_iam_role.eks_nodes.arn
-}
-
-https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+kubectl get deployment -n kube-system aws-load-balancer-controller
