@@ -1,27 +1,42 @@
 controller:
-  tag: "lts"
-  installPlugins:
-    - kubernetes:latest
-    - workflow-job:latest
-    - workflow-aggregator:latest
-    - git:latest
-    - docker-workflow:latest
-    - credentials-binding:latest
-    - configuration-as-code:latest
+  # The Jenkins controller image tag (lts = Long Term Support version)
+  image.tag: "lts"
 
+  # Plugins to automatically install in the Jenkins controller
+  installPlugins:
+    - kubernetes:latest               # Enables Jenkins to run agents dynamically in Kubernetes
+    - workflow-job:latest             # Enables support for Jenkins pipeline jobs
+    - workflow-aggregator:latest      # Installs all necessary plugins for pipeline support
+    - git:latest                      # Git plugin to clone/pull from repositories
+    - docker-workflow:latest          # Allows Jenkins to run Docker commands inside pipelines
+    - credentials-binding:latest      # Allows binding credentials in builds (useful for secrets)
+    - configuration-as-code:latest    # Enables Jenkins Configuration as Code (JCasC)
+
+  # Jenkins Configuration as Code (JCasC) setup
   JCasC:
-    enabled: true
+    enabled: true                     # Enables loading Jenkins configuration from a YAML file
 
   sidecars:
     configAutoReload:
-      enabled: true
+      enabled: true                   # Automatically reload configuration when the ConfigMap changes
 
   agent:
+    # This is the label used in Jenkinsfile (e.g., agent { label 'docker' })
     customJenkinsLabels: docker
+
+    # Your custom Docker-in-Docker agent image (from Docker Hub)
     image: hosa97/hosa-dind
+
+    # The image tag for your agent image
     tag: latest
+
+    # Required for Docker-in-Docker to function inside the pod
     privileged: true
+
+    # Run as root user inside the container (necessary for Docker)
     runAsUser: 0
+
+    # Mount the host machine's Docker socket into the container
     volumes:
       - type: HostPath
         hostPath: /var/run/docker.sock
