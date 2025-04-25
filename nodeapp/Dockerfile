@@ -1,6 +1,15 @@
 FROM node:slim
+
 WORKDIR /nodeapp
-COPY package*.json ./
+
+# Copy package files first for better caching
+COPY nodeapp/package*.json ./
+
+# Install dependencies
 RUN npm install
-COPY . .
+
+# Copy the rest of the application
+COPY nodeapp/ .
+
+# Start the application
 CMD ["node", "app.js"]
