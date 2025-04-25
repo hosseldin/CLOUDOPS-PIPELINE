@@ -25,7 +25,7 @@ controller:
     customJenkinsLabels: docker
 
     # Your custom Docker-in-Docker agent image (from Docker Hub)
-    image: hosa97/hosa-dind
+    image: hosa97/hosa-dind01
 
     # The image tag for your agent image
     tag: latest
