@@ -1,9 +1,15 @@
 #!/bin/bash
+set -e
+
 # Start Docker daemon in background
-sudo dockerd > /tmp/dockerd.log 2>&1 &
+dockerd &
 
-# Give it a few seconds to start up
-sleep 5
+# Wait for Docker to be ready
+while(! docker info > /dev/null 2>&1); do
+  echo "Waiting for Docker to launch..."
+  sleep 1
+done
 
-# Run the Jenkins agent
-exec /usr/bin/tini -- /usr/local/bin/jenkins-agent
+# Start Jenkins agent
+exec /usr/bin/jenkins-agent "$@"
+
