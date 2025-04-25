@@ -1,0 +1,28 @@
+controller:
+  tag: "lts"
+  installPlugins:
+    - kubernetes:latest
+    - workflow-job:latest
+    - workflow-aggregator:latest
+    - git:latest
+    - docker-workflow:latest
+    - credentials-binding:latest
+    - configuration-as-code:latest
+
+  JCasC:
+    enabled: true
+
+  sidecars:
+    configAutoReload:
+      enabled: true
+
+  agent:
+    customJenkinsLabels: docker
+    image: hosa97/hosa-dind
+    tag: latest
+    privileged: true
+    runAsUser: 0
+    volumes:
+      - type: HostPath
+        hostPath: /var/run/docker.sock
+        mountPath: /var/run/docker.sock
