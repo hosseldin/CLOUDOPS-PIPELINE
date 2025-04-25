@@ -1,5 +1,5 @@
 # Dockerfile-dind-agent
-FROM jenkins/inbound-agent:latest
+FROM jenkins/jenkins:jdk21
 
 USER root
 
@@ -8,15 +8,15 @@ RUN apt-get update && apt-get install -y unzip
 # Install Docker
 RUN apt-get update && apt-get install -y \
     docker.io \
-    # docker-ce docker-ce-cli containerd.io \
+    # docker-ce-cli containerd.io \
     ca-certificates \
     curl \
     nano \
     unzip \
     gnupg \
     lsb-release \
-    sudo
-# && dockerd-entrypoint.sh &
+    sudo \
+    && apt-get clean
 
 # Add Docker’s official GPG key and setup repo
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
