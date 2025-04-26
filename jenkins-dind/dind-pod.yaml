@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins-dind-agent03
+  namespace: jenkins
+spec:
+  containers:
+    - name: hosa-dind03
+      image: docker:dind
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - mountPath: /var/lib/docker  # Correct path for Docker data in DinD container
+          name: docker-graph-storage
+        - mountPath: /home/jenkins
+          name: jenkins-home
+
+    - name: jenkins-agent
+      image: jenkins/inbound-agent:latest
+      env:
+        - name: DOCKER_HOST
+          value: tcp://localhost:2375  # Ensure agent connects to the DinD container
+        - name: JENKINS_URL
+          value: http://192.168.49.2:30600  # Replace with your actual Jenkins URL
+        - name: JENKINS_AGENT_NAME
+          value: jenkins-dind-agent03
+        - name: JENKINS_AGENT_WORKDIR
+          value: /home/jenkins
+        - name: JENKINS_AGENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jenkins-agent-secret
+              key: jnlp-secret
+      volumeMounts:
+        - mountPath: /home/jenkins
+          name: jenkins-home
+
+  volumes:
+    - name: docker-graph-storage
+      emptyDir: {}  # Volume for Docker's data (use for DinD)
+    - name: jenkins-home
+      emptyDir: {}  # Writable volume for Jenkins agent's workspace
