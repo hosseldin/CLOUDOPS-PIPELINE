@@ -4,6 +4,7 @@ module "vpc" {
 
 module "iam" {
   source = "./modules/iam"
+  aws_eks_cluster_name = module.eks.cluster_name
 }
 
 module "eks" {
