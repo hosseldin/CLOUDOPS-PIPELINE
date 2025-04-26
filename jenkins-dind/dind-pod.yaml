@@ -9,13 +9,19 @@ spec:
       image: docker:dind
       securityContext:
         privileged: true
+      
+      env:
+      - name: DOCKER_TLS_CERTDIR  # Disable TLS for simpler setup
+        value: ""
+      args: ["--host", "tcp://0.0.0.0:2375", "--tls=false"]
+      
       volumeMounts:
         - mountPath: /var/lib/docker  # Correct path for Docker data in DinD container
           name: docker-graph-storage
         - mountPath: /home/jenkins
           name: jenkins-home
 
-    - name: jenkins-agent
+    - name: jenkins-agent03
       image: jenkins/inbound-agent:latest
       env:
         - name: DOCKER_HOST
@@ -24,16 +30,19 @@ spec:
           value: http://192.168.49.2:30600  # Replace with your actual Jenkins URL
         - name: JENKINS_AGENT_NAME
           value: jenkins-dind-agent03
-        - name: JENKINS_AGENT_WORKDIR
+        - name: JENKINS_WORKDIR
           value: /home/jenkins
-        - name: JENKINS_AGENT_SECRET
+        - name: JENKINS_SECRET
           valueFrom:
             secretKeyRef:
               name: jenkins-agent-secret
               key: jnlp-secret
+      
       volumeMounts:
-        - mountPath: /home/jenkins
-          name: jenkins-home
+      - mountPath: /home/jenkins
+        name: jenkins-home
+      securityContext:
+        runAsUser: 1000  # Jenkins user in container
 
   volumes:
     - name: docker-graph-storage
