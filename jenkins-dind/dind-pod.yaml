@@ -26,12 +26,22 @@ spec:
       env:
         - name: DOCKER_HOST
           value: tcp://localhost:2375  # Ensure agent connects to the DinD container
+        
+        - name: JENKINS_URL
+          value: http://jenkins.jenkins.svc.cluster.local:8080  # Internal DNS
+        
+        - name: JENKINS_TUNNEL
+          value: "jenkins.jenkins.svc.cluster.local:50000"  # JNLP through main service
+
         - name: JENKINS_URL
           value: http://192.168.49.2:30600  # Replace with your actual Jenkins URL
+        
         - name: JENKINS_AGENT_NAME
           value: jenkins-dind-agent03
+        
         - name: JENKINS_WORKDIR
           value: /home/jenkins
+        
         - name: JENKINS_SECRET
           valueFrom:
             secretKeyRef:
