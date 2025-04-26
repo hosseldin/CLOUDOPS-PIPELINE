@@ -27,8 +27,8 @@ spec:
         - name: DOCKER_HOST
           value: tcp://localhost:2375  # Ensure agent connects to the DinD container
         
-        - name: JENKINS_URL
-          value: http://jenkins.jenkins.svc.cluster.local:8080  # Internal DNS
+        # - name: JENKINS_URL
+        #   value: http://jenkins.jenkins.svc.cluster.local:8080  # Internal DNS
         
         - name: JENKINS_TUNNEL
           value: "jenkins.jenkins.svc.cluster.local:50000"  # JNLP through main service
