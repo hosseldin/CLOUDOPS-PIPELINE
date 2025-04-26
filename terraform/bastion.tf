@@ -225,6 +225,7 @@ resource "aws_iam_policy" "eksctl_full_access" {
           "iam:ListOpenIDConnectProviders",
           "iam:TagOpenIDConnectProvider",
           "iam:UpdateOpenIDConnectProviderThumbprint"
+          
         ],
         Resource = "*"
       },
@@ -253,10 +254,12 @@ resource "aws_iam_policy" "eksctl_full_access" {
           "iam:AttachRolePolicy",
           "iam:DetachRolePolicy"
         ],
-        Resource = [
-          "arn:aws:iam::214797541313:role/eksctl-*",
-          "arn:aws:iam::214797541313:role/aws-service-role/eks-nodegroup.amazonaws.com/*"
-        ]
+        # Resource = [
+        # #   "arn:aws:iam::214797541313:role/eksctl-*",
+        # #   "arn:aws:iam::214797541313:role/aws-service-role/eks-nodegroup.amazonaws.com/*",
+        #   "*"
+        # ]
+        Resource = "*"
       },
       # IAM policy permissions
       {
@@ -268,7 +271,9 @@ resource "aws_iam_policy" "eksctl_full_access" {
           "iam:GetPolicyVersion",
           "iam:ListPolicyVersions"
         ],
-        Resource = "arn:aws:iam::214797541313:policy/eksctl-*"
+        # Resource = "arn:aws:iam::214797541313:policy/eksctl-*"
+        Resource = "*"
+        
       }
     ]
   })
@@ -277,6 +282,27 @@ resource "aws_iam_policy" "eksctl_full_access" {
 resource "aws_iam_role_policy_attachment" "eksctl_full_access" {
   role       = aws_iam_role.bastion_role.name
   policy_arn = aws_iam_policy.eksctl_full_access.arn
+}
+
+resource "aws_iam_policy" "eks_describe_addon_versions" {
+  name   = "AllowEKSDescribeAddonVersions"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeAddonVersions",
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_describe_addons_policy" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = aws_iam_policy.eks_describe_addon_versions.arn
 }
 
 resource "aws_iam_instance_profile" "bastion_instance_profile" {

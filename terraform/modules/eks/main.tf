@@ -22,6 +22,12 @@ resource "aws_eks_cluster" "eks" {
     security_group_ids      = [aws_security_group.eks_api.id]
   }
 
+  tags = {
+          "alpha.eksctl.io/cluster-oidc-enabled" = "true"
+        }
+  tags_all = {
+          "alpha.eksctl.io/cluster-oidc-enabled" = "true"
+        }
 
 
   depends_on = [var.cluster_role_arn]
@@ -61,10 +67,10 @@ resource "aws_security_group" "eks_api" {
   }
 }
 
-resource "aws_eks_addon" "ebs_csi" {
-  cluster_name = aws_eks_cluster.eks.name
-  addon_name   = "aws-ebs-csi-driver"
-  service_account_role_arn = var.eks_nodes_role_arn
-}
+# resource "aws_eks_addon" "ebs_csi" {
+#   cluster_name = aws_eks_cluster.eks.name
+#   addon_name   = "aws-ebs-csi-driver"
+#   service_account_role_arn = var.eks_nodes_role_arn
+# }
 
 
