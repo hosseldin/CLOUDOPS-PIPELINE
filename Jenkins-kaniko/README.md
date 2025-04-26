@@ -1,6 +1,6 @@
 # Jenkins + Kaniko + ECR Pipeline Setup
 
-This project demonstrates how to build and push Docker images using **Kaniko** in a **Kubernetes** environment with **Jenkins**, storing images in **Amazon ECR**.
+How to build and push Docker images using **Kaniko** in a **Kubernetes** environment with **Jenkins**, storing images in **Amazon ECR**.
 
 ---
 
@@ -9,21 +9,6 @@ This project demonstrates how to build and push Docker images using **Kaniko** i
 - Kubernetes Cluster with Jenkins installed
 - Jenkins Kubernetes plugin installed
 
----
-
-## 📁 File Structure
-
-```bash
-project-root/
-├── iam/
-│   ├── create-policy.sh
-│   ├── create-user.sh
-├── k8s/
-│   └── aws-secret.yaml
-├── jenkins/
-│   └── Jenkinsfile
-└── README.md
-```
 
 ---
 
@@ -100,7 +85,7 @@ data:
 
 Apply the secret:
 ```bash
-kubectl apply -f k8s/aws-secret.yaml
+kubectl apply -f k8s/aws-secret.yaml -n jenkins-ns
 ```
 
 ---
@@ -118,7 +103,7 @@ pipeline {
 
   environment {
     AWS_REGION = 'us-east-1'
-    ECR_REGISTRY = '214797541313.dkr.ecr.us-east-1.amazonaws.com'
+    ECR_REGISTRY = '214--<account-id>.dkr.ecr.us-east-1.amazonaws.com'
     ECR_REPOSITORY = 'kanikotest'
   }
 
@@ -194,19 +179,3 @@ Once triggered, Jenkins will:
 
 ---
 
-## 📌 Tips
-- Make sure your Jenkins has permissions to create dynamic pods
-- Validate secret keys and base64 encoding
-- You can test the Kaniko executor locally in a Docker container
-
----
-
-## 📚 References
-- [Kaniko Project](https://github.com/GoogleContainerTools/kaniko)
-- [Amazon ECR Documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html)
-- [Jenkins Kubernetes Plugin](https://plugins.jenkins.io/kubernetes/)
-
----
-
-## 🧑‍💻 Author
-**Mohamed Mourad**
