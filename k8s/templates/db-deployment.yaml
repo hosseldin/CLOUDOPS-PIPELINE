@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  serviceName: db
+  selector:
+    matchLabels:
+      name: db
+  replicas: {{ .Values.MYSQL_REPLICA_COUNT }}
+  template:
+    metadata:
+      labels:
+        name: db
+    spec:
+      containers:
+      - name: db
+        image: mysql:{{ .Values.MYSQL_VERSION }}
+        ports:
+        - containerPort: {{ .Values.MYSQL_PORT }}
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nodeapp-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: nodeapp-secret
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nodeapp-secret
+              key: MYSQL_PASSWORD

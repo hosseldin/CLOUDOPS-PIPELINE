@@ -1,0 +1,8 @@
+apiVersion: v2
+name: node-app-chart
+description: A Helm chart for node-app-chart
+type: application
+# The version of the chart
+version: 0.1.0
+#App version is the version of the application being deployed
+appVersion: "1.16.0"

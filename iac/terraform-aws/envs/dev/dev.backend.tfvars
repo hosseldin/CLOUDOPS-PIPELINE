@@ -18,9 +18,11 @@
 # ==============================================
 
 
-bucket = "hosa-terraform-state"
-region = "us-east-1"
-key    = "development/terraform.tfstate"
+# bucket = "hosa-terraform-state"
+bucket = "hosa-statebucket-01"
+region = "eu-central-1"
+# region = "us-east-1"
+key = "development/terraform.tfstate"
 
 
 # ==============================================

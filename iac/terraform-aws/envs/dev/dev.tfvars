@@ -17,9 +17,10 @@
 #
 # ==============================================
 
-aws_region = "us-east-1"
-vpc_name   = "hosa-vpc-terraform"
-vpc_cidr   = "10.0.0.0/16"
+aws_region = "eu-central-1"
+# aws_region = "us-east-1"
+vpc_name = "hosa-vpc-terraform"
+vpc_cidr = "10.0.0.0/16"
 
 igw_name        = "hosa-igw-01"
 public_rt_name  = "hosa-public-rt"
@@ -45,7 +46,7 @@ instances = [
   {
     name           = "hosa-server-1"
     subnet_name    = "hosa-PubSubnet-1"
-    instance_type  = "t2.micro"
+    instance_type  = "t3.micro"
     security_group = ["public-sg"]
   }
 ]
