@@ -1,3 +1,0 @@
-aws iam create-policy \
-    --policy-name jenkins-ecr-policy \
-    --policy-document file://jenkins-ecr-policy.json

@@ -1,0 +1,38 @@
+pipeline {
+  agent {
+    kubernetes {
+      yamlFile 'jenkins/kaniko-pod.yaml'
+    }
+  }
+
+  environment {
+    AWS_REGION = 'us-east-1'
+    ECR_REGISTRY = '214..<account-id>.dkr.ecr.us-east-1.amazonaws.com'
+    ECR_REPOSITORY = 'kanikotest'
+  }
+
+  stages {
+    stage('Build & Push to ECR') {
+      steps {
+        container('kaniko') {
+          script {
+            sh '''
+              mkdir -p /kaniko/.docker
+              echo '{
+                "credHelpers": {
+                  "${ECR_REGISTRY}": "ecr-login"
+                }
+              }' > /kaniko/.docker/config.json
+
+              /kaniko/executor \
+                --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+                --context-sub-path=nodeapp \
+                --dockerfile=Dockerfile \
+                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}
+            '''
+          }
+        }
+      }
+    }
+  }
+}
