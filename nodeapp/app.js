@@ -1,5 +1,4 @@
 const express = require('express')
-var mysql = require('mysql');
 const app = express()
 const port = process.env.PORT || 80
 
