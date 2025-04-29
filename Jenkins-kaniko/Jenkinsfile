@@ -13,6 +13,9 @@ pipeline {
 
   stages {
     stage('Build & Push to ECR') {
+        when {
+            changeset "nodeapp/**"
+        }
       steps {
         container('kaniko') {
           script {
