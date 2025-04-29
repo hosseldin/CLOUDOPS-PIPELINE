@@ -75,6 +75,13 @@ pipeline {
 
     // Stage for building and pushing to ECR (only if the folder was changed)
     stage('Build and Push to ECR') {
+        when {
+            expression {
+                // Check if the file changes include any changes in the target folder
+                def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
+                return changedFiles.contains('nodeapp/')
+            }
+        }
         steps {
             script {
                 // Get timestamp (format: YYYYMMDD-HHMMSS)
