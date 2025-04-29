@@ -83,6 +83,7 @@ pipeline {
             }
         }
         steps {
+            container('kaniko') {
             script {
                 // Get timestamp (format: YYYYMMDD-HHMMSS)
                 def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
