@@ -19,38 +19,40 @@ pipeline {
     }
 
     stage('Build & Push to ECR') {
-      when {
-        changeset "nodeapp/**"
-      }
-      steps {
-        container('kaniko') {
-          script {
-            // Optional: Check actual path inside container
-            sh """
-              echo '=== Debug: Workspace Path ==='
-              pwd
-              echo '=== Debug: List workspace ==='
-              ls -la
-
-              # Create Docker config for ECR
-              mkdir -p /kaniko/.docker
-              echo '{
-                "credHelpers": {
-                  "'\$ECR_REGISTRY'": "ecr-login"
-                }
-              }' > /kaniko/.docker/config.json
-
-              # Build and push with Kaniko
-              /kaniko/executor \
-                --context=$(pwd) \
-                --context-sub-path=nodeapp \
-                --dockerfile=Dockerfile \
-                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER}
-            """
-          }
+        when {
+            changeset "nodeapp/**"
         }
-      }
+        steps {
+            container('kaniko') {
+                script {
+                    sh '''
+                    echo "=== Debug: Workspace Path ==="
+                    pwd
+                    echo "=== Debug: List workspace ==="
+                    ls -la
+
+                    # Create Docker config for ECR
+                    mkdir -p /kaniko/.docker
+                    cat > /kaniko/.docker/config.json <<EOF
+                    {
+                        "credHelpers": {
+                        "$ECR_REGISTRY": "ecr-login"
+                        }
+                    }
+            EOF
+
+                    # Build and push using Kaniko
+                    /kaniko/executor \
+                        --context=$PWD \
+                        --context-sub-path=nodeapp \
+                        --dockerfile=Dockerfile \
+                        --destination=$ECR_REGISTRY/$ECR_REPOSITORY:v$BUILD_NUMBER
+                    '''
+                }
+            }
+        }
     }
+
 
     stage('Notify Slack') {
       steps {
