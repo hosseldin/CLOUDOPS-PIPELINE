@@ -42,6 +42,10 @@ pipeline {
     ECR_REPOSITORY = 'node-app-jenkins'
   }
 
+  triggers {
+    githubPush()  // This triggers the pipeline when a push is made to the GitHub repository
+  }
+
   stages {
     stage('Build & Push to ECR') {
       steps {
