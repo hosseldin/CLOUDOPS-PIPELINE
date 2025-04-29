@@ -12,28 +12,37 @@ pipeline {
   }
 
   stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
     stage('Build & Push to ECR') {
-        when {
-            changeset "nodeapp/**"
-        }
+      when {
+        changeset "nodeapp/**"
+      }
       steps {
         container('kaniko') {
           script {
-            // Configure Docker credentials for ECR
+            // Optional: Check actual path inside container
             sh """
-              # Create the Docker config directory
-              mkdir -p /kaniko/.docker
+              echo '=== Debug: Workspace Path ==='
+              pwd
+              echo '=== Debug: List workspace ==='
+              ls -la
 
-              # Create config.json with ECR credentials helper
+              # Create Docker config for ECR
+              mkdir -p /kaniko/.docker
               echo '{
                 "credHelpers": {
                   "${ECR_REGISTRY}": "ecr-login"
                 }
               }' > /kaniko/.docker/config.json
 
-              # Build and push using Kaniko
+              # Build and push with Kaniko
               /kaniko/executor \
-                --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+                --context=$(pwd) \
                 --context-sub-path=nodeapp \
                 --dockerfile=Dockerfile \
                 --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER}
@@ -42,7 +51,7 @@ pipeline {
         }
       }
     }
-    
+
     stage('Notify Slack') {
       steps {
         script {
@@ -64,3 +73,77 @@ pipeline {
     }
   }
 }
+
+
+
+
+
+
+
+
+// pipeline {
+//   agent {
+//     kubernetes {
+//       yaml 'kaniko-pod.yaml'
+//     }
+//   }
+
+//   environment {
+//     AWS_REGION = 'us-east-1'
+//     ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
+//     ECR_REPOSITORY = 'node-app-jenkins'
+//   }
+
+//   stages {
+//     stage('Build & Push to ECR') {
+//         when {
+//             changeset "nodeapp/**"
+//         }
+//       steps {
+//         container('kaniko') {
+//           script {
+//             // Configure Docker credentials for ECR
+//             sh """
+//               # Create the Docker config directory
+//               mkdir -p /kaniko/.docker
+
+//               # Create config.json with ECR credentials helper
+//               echo '{
+//                 "credHelpers": {
+//                   "${ECR_REGISTRY}": "ecr-login"
+//                 }
+//               }' > /kaniko/.docker/config.json
+
+//               # Build and push using Kaniko
+//               /kaniko/executor \
+//                 --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+//                 --context-sub-path=nodeapp \
+//                 --dockerfile=Dockerfile \
+//                 --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER}
+//             """
+//           }
+//         }
+//       }
+//     }
+    
+//     stage('Notify Slack') {
+//       steps {
+//         script {
+//           slackSend(
+//             channel: 'eks-jenkins-notifications',
+//             attachments: [
+//               [
+//                 fallback: 'Build Info',
+//                 color: '#36a64f',
+//                 title: 'Build Complete',
+//                 title_link: "${env.BUILD_URL}",
+//                 text: '✅ Jenkins build finished ya Za3ama.',
+//                 image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+//               ]
+//             ]
+//           )
+//         }
+//       }
+//     }
+//   }
+// }
