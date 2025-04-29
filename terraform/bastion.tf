@@ -4,8 +4,8 @@ resource "aws_iam_role" "bastion_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Action    = "sts:AssumeRole",
-      Effect    = "Allow",
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
       Principal = {
         Service = "ec2.amazonaws.com"
       }
@@ -35,21 +35,29 @@ resource "aws_iam_role_policy_attachment" "eks_read_only" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "ecr_read_only" {
-  role       = aws_iam_role.bastion_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
 
-resource "aws_iam_policy" "iam_policy_admin" {
-  name        = "IAMPolicyManagement"
-  description = "Allows creating, updating, and managing IAM policies"
-  
+
+
+# Create IAM policy for EKS describe access
+resource "aws_iam_policy" "eks_full_access_for_bastion" {
+  name        = "eks-full-access-for-bastion"
+  description = "Allows all necessary EKS and IAM permissions for bastion operations"
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow",
+        Effect = "Allow"
         Action = [
+          "eks:DescribeCluster*",
+          "eks:ListClusters"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders",
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
           "iam:DeletePolicy",
@@ -62,44 +70,12 @@ resource "aws_iam_policy" "iam_policy_admin" {
           "iam:DetachRolePolicy",
           "iam:PutRolePolicy",
           "iam:DeleteRolePolicy"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "attach_iam_policy_admin" {
-  role       = aws_iam_role.bastion_role.name
-  policy_arn = aws_iam_policy.iam_policy_admin.arn
-}
-
-# Create IAM policy for EKS describe access
-resource "aws_iam_policy" "eks_full_access_for_bastion" {
-  name        = "eks-full-access-for-bastion"
-  description = "Allows all necessary EKS and IAM permissions for bastion operations"
-  policy      = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = [
-          "eks:DescribeCluster*",
-          "eks:ListClusters"
         ]
         Resource = "*"
       },
       {
-        Effect   = "Allow"
-        Action   = [
-          "iam:GetOpenIDConnectProvider",
-          "iam:ListOpenIDConnectProviders"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "iam:CreateServiceAccount",
           "iam:GetRole",
           "iam:ListAttachedRolePolicies"
@@ -124,8 +100,8 @@ resource "aws_iam_policy" "eks_oidc_management" {
     Version = "2012-10-17",
     Statement = [
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
           "iam:CreateOpenIDConnectProvider",
           "iam:DeleteOpenIDConnectProvider",
           "iam:GetOpenIDConnectProvider",
@@ -145,57 +121,6 @@ resource "aws_iam_role_policy_attachment" "oidc_management" {
 }
 
 
-# resource "aws_iam_policy" "eks_tagging_permissions" {
-#   name        = "eks-tagging-permissions"
-#   description = "Permissions to tag EKS resources"
-
-#   policy = jsonencode({
-#     Version = "2012-10-17",
-#     Statement = [
-#       {
-#         Effect   = "Allow",
-#         Action   = [
-#           "eks:TagResource",
-#           "eks:UntagResource"
-#         ],
-#         Resource = "arn:aws:eks:us-west-2:214797541313:cluster/eks-cluster"
-#       }
-#     ]
-#   })
-# }
-
-# resource "aws_iam_role_policy_attachment" "eks_tagging" {
-#   role       = aws_iam_role.bastion_role.name
-#   policy_arn = aws_iam_policy.eks_tagging_permissions.arn
-# }
-
-# resource "aws_iam_policy" "cloudformation_read_access" {
-#   name        = "cloudformation-read-access"
-#   description = "Permissions to read CloudFormation stacks"
-
-#   policy = jsonencode({
-#     Version = "2012-10-17",
-#     Statement = [
-#       {
-#         Effect   = "Allow",
-#         Action   = [
-#           "cloudformation:DescribeStacks",
-#           "cloudformation:ListStacks",
-#           "cloudformation:GetTemplate"
-#         ],
-#         Resource = "*"
-#       }
-#     ]
-#   })
-# }
-
-
-
-# resource "aws_iam_role_policy_attachment" "cloudformation_read" {
-#   role       = aws_iam_role.bastion_role.name
-#   policy_arn = aws_iam_policy.cloudformation_read_access.arn
-# }
-
 
 resource "aws_iam_policy" "eksctl_full_access" {
   name        = "eksctl-full-access"
@@ -206,8 +131,8 @@ resource "aws_iam_policy" "eksctl_full_access" {
     Statement = [
       # EKS permissions
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
           "eks:DescribeCluster*",
           "eks:ListClusters",
           "eks:TagResource",
@@ -217,22 +142,22 @@ resource "aws_iam_policy" "eksctl_full_access" {
       },
       # IAM OIDC permissions
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
           "iam:CreateOpenIDConnectProvider",
           "iam:DeleteOpenIDConnectProvider",
           "iam:GetOpenIDConnectProvider",
           "iam:ListOpenIDConnectProviders",
           "iam:TagOpenIDConnectProvider",
           "iam:UpdateOpenIDConnectProviderThumbprint"
-          
+
         ],
         Resource = "*"
       },
       # CloudFormation permissions
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
           "cloudformation:CreateStack",
           "cloudformation:DeleteStack",
           "cloudformation:DescribeStacks",
@@ -244,8 +169,8 @@ resource "aws_iam_policy" "eksctl_full_access" {
       },
       # IAM role permissions
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
           "iam:CreateRole",
           "iam:DeleteRole",
           "iam:GetRole",
@@ -263,8 +188,8 @@ resource "aws_iam_policy" "eksctl_full_access" {
       },
       # IAM policy permissions
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
           "iam:CreatePolicy",
           "iam:DeletePolicy",
           "iam:GetPolicy",
@@ -273,7 +198,7 @@ resource "aws_iam_policy" "eksctl_full_access" {
         ],
         # Resource = "arn:aws:iam::214797541313:policy/eksctl-*"
         Resource = "*"
-        
+
       }
     ]
   })
@@ -285,7 +210,7 @@ resource "aws_iam_role_policy_attachment" "eksctl_full_access" {
 }
 
 resource "aws_iam_policy" "eks_describe_addon_versions" {
-  name   = "AllowEKSDescribeAddonVersions"
+  name = "AllowEKSDescribeAddonVersions"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -303,6 +228,12 @@ resource "aws_iam_policy" "eks_describe_addon_versions" {
 resource "aws_iam_role_policy_attachment" "attach_describe_addons_policy" {
   role       = aws_iam_role.bastion_role.name
   policy_arn = aws_iam_policy.eks_describe_addon_versions.arn
+}
+
+
+resource "aws_iam_role_policy_attachment" "ecr_full_access" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = module.iam.ecr_full_access_arn
 }
 
 resource "aws_iam_instance_profile" "bastion_instance_profile" {
@@ -360,20 +291,20 @@ resource "aws_key_pair" "my_key" {
 
 # Bastion EC2 Instance
 resource "aws_instance" "bastion" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro"
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
   associate_public_ip_address = true
-  subnet_id              = module.vpc.public_subnet_ids[0]
-  vpc_security_group_ids = [aws_security_group.bastion_sg.id]
-  key_name               = aws_key_pair.my_key.key_name
+  subnet_id                   = module.vpc.public_subnet_ids[0]
+  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
+  key_name                    = aws_key_pair.my_key.key_name
 
-  iam_instance_profile   = aws_iam_instance_profile.bastion_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.bastion_instance_profile.name
 
   tags = {
     Name = "eks-bastion"
   }
 
-user_data = <<-EOF
+  user_data = <<-EOF
         #!/bin/bash
         set -ex
 
@@ -398,6 +329,8 @@ user_data = <<-EOF
         rm kubectl.sha256
         echo "kubectl v1.29.0 installed"
 
+        yum install git
+
         # Install Helm
         curl -LO "https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz"
         tar -zxvf "helm-v3.14.0-linux-amd64.tar.gz"
@@ -410,27 +343,10 @@ user_data = <<-EOF
         mv /tmp/eksctl /usr/local/bin
         echo "eksctl installed"
 
-        # Configure bash environment
-        cat <<EOT >> ~/.bashrc
-        # Kubernetes and Helm completions
-        source <(kubectl completion bash)
-        source <(helm completion bash)
-        alias k=kubectl
-        complete -F __start_kubectl k
-        export PATH=$PATH:/usr/local/bin
-        EOT
-
         # Install jq for JSON processing
         yum install -y jq
-
-        # Verify installations
-        echo "=== Versions ==="
-        aws --version
-        kubectl version --client --short
-        helm version --short
-        eksctl version
         
-        aws eks update-kubeconfig --name eks-cluster --region us-west-2
+        aws eks update-kubeconfig --name eks-cluster --region us-east-1
         EOF
 
 }
@@ -442,18 +358,46 @@ output "bastion_public_ip" {
 
 resource "aws_eks_access_entry" "admin_access" {
   cluster_name  = module.eks.cluster_name
-  principal_arn =  aws_iam_role.bastion_role.arn   # Replace with your IAM user/role
-  type          = "STANDARD"  # or "EC2_LINUX" for nodes
+  principal_arn = aws_iam_role.bastion_role.arn # Replace with your IAM user/role
+  type          = "STANDARD"                    # or "EC2_LINUX" for nodes
 }
 
 
 # Attach AmazonEKSAdminPolicy to the access entry
 resource "aws_eks_access_policy_association" "root_policy" {
   cluster_name  = module.eks.cluster_name
-  principal_arn  = aws_eks_access_entry.admin_access.principal_arn
-  policy_arn     = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = aws_eks_access_entry.admin_access.principal_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
   access_scope {
     type = "cluster"
   }
 
+}
+
+
+
+
+
+
+resource "aws_iam_policy" "secretsmanager_full_access" {
+  name        = "secretsmanagert-full-access"
+  description = "Permissions to manage secret management for EKS"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "secretsmanager:*",
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "secretsmanager_full_access" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = aws_iam_policy.secretsmanager_full_access.arn
 }

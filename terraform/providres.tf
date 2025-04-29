@@ -5,27 +5,16 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 4.57.0" # or a newer version
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
+  }
+
+  backend "s3" {
+    bucket       = "terraform-state-project-1"
+    region       = "us-east-1"
+    key          = "state.tfstate"
+    use_lockfile = true
   }
 }
 
 provider "aws" {
-  region = "us-west-2"
-}
-
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args = [
-      "eks",
-      "get-token",
-      "--cluster-name", module.eks.cluster_name
-    ]
-  }
+  region = "us-east-1"
 }
