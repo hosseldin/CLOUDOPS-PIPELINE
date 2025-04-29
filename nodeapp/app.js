@@ -43,7 +43,7 @@ app.get('/redis', (req, res) => {
         }
         if (rep) {                          //JSON objects need to be parsed after reading from redis, since it is stringified before being stored into cache                      
             console.log(rep);
-            res.send("redis is successfulyyyyyyyyyy connected");
+            res.send("redis is successfulyyyyyyy connected");
         }
     })
 })
