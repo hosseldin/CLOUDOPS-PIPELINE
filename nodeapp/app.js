@@ -4,23 +4,23 @@ const port = process.env.PORT || 80
 
 const mysql = require('mysql2');
 const pool = mysql.createPool({
-  host: process.env.MYSQL_HOSTNAME,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  port: process.env.MYSQL_PORT || 3306,
+    host: process.env.MYSQL_HOSTNAME,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    port: process.env.MYSQL_PORT || 3306,
 });
 
 app.get("/db", (req, res) => {
-  pool.getConnection(function(err, connection) {
-    if (err) {
-      res.send("db connection failed");
-      console.error('Database connection failed: ' + err.stack);
-      return;
-    }
-    res.send("db connection successful finished pipeline");
-    console.log('Connected to database.');
-    connection.release(); // release back to the pool
-  });
+    pool.getConnection(function (err, connection) {
+        if (err) {
+            res.send("db connection failed");
+            console.error('Database connection failed: ' + err.stack);
+            return;
+        }
+        res.send("db connection successful finished pipeline");
+        console.log('Connected to database.');
+        connection.release(); // release back to the pool
+    });
 });
 
 const redis = require('redis');
@@ -35,18 +35,19 @@ client.on('error', err => {
 
 app.get('/redis', (req, res) => {
 
-  client.set('foo','bar', (error, rep)=> {                
-    if(error){     
-console.log(error);
-      res.send("redis connection failed");                             
-      return;                
-  }                 
-  if(rep){                          //JSON objects need to be parsed after reading from redis, since it is stringified before being stored into cache                      
- console.log(rep);
-  res.send("redis is successfuly connected");                 
- }}) 
-  })
-  
-  app.listen(port, () => {
+    client.set('foo', 'bar', (error, rep) => {
+        if (error) {
+            console.log(error);
+            res.send("redis connection failed");
+            return;
+        }
+        if (rep) {                          //JSON objects need to be parsed after reading from redis, since it is stringified before being stored into cache                      
+            console.log(rep);
+            res.send("redis is successfulyyyyyyyyyyyyy connected");
+        }
+    })
+})
+
+app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
-  })
+})

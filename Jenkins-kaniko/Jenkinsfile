@@ -1,14 +1,45 @@
 pipeline {
   agent {
     kubernetes {
-      yamlFile 'jenkins/kaniko-pod.yaml'
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kaniko
+          namespace: jenkins-ns
+        spec:
+          containers:
+          - name: kaniko
+            image: gcr.io/kaniko-project/executor:debug
+            command:
+            - /busybox/cat
+            tty: true
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            volumeMounts:
+              - name: aws-config
+                mountPath: /kaniko/.aws
+          volumes:
+            - name: aws-config
+              secret:
+                secretName: aws-credentials
+      '''
     }
   }
 
   environment {
     AWS_REGION = 'us-east-1'
-    ECR_REGISTRY = '214..<account-id>.dkr.ecr.us-east-1.amazonaws.com'
-    ECR_REPOSITORY = 'kanikotest'
+    ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
+    ECR_REPOSITORY = 'node-app-jenkins'
   }
 
   stages {
@@ -16,21 +47,46 @@ pipeline {
       steps {
         container('kaniko') {
           script {
-            sh '''
+            // Configure Docker credentials for ECR
+            sh """
+              # Create the Docker config directory
               mkdir -p /kaniko/.docker
+
+              # Create config.json with ECR credentials helper
               echo '{
                 "credHelpers": {
                   "${ECR_REGISTRY}": "ecr-login"
                 }
               }' > /kaniko/.docker/config.json
 
+              # Build and push using Kaniko
               /kaniko/executor \
                 --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
                 --context-sub-path=nodeapp \
                 --dockerfile=Dockerfile \
-                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}
-            '''
+                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER}
+            """
           }
+        }
+      }
+    }
+    
+    stage('Notify Slack') {
+      steps {
+        script {
+          slackSend(
+            channel: 'eks-jenkins-notifications',
+            attachments: [
+              [
+                fallback: 'Build Info',
+                color: '#36a64f',
+                title: 'Build Complete',
+                title_link: "${env.BUILD_URL}",
+                text: '✅ Jenkins build finished ya Za3ama.',
+                image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+              ]
+            ]
+          )
         }
       }
     }
