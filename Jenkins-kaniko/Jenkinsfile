@@ -43,7 +43,7 @@ pipeline {
   }
 
   triggers {
-    githubPush()  // This triggers the pipeline when a push is made to the GitHub repository
+    githubPush()  // This triggers the pipeline when a push is made to the GitHub repositoryy
   }
 
   stages {
