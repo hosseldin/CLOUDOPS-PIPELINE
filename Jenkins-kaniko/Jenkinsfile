@@ -1,7 +1,7 @@
 pipeline {
   agent {
     kubernetes {
-      yaml 'kaniko-pod.yaml'
+      readFile('kaniko-pod.yaml')  // Load the content of the YAML file
     }
   }
 
