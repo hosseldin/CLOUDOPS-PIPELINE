@@ -40,16 +40,47 @@ pipeline {
     AWS_REGION = 'us-east-1'
     ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
     ECR_REPOSITORY = 'node-app-jenkins'
+    TARGET_FOLDER = 'nodeapp'  // Specify the folder you want to watch for changes
   }
 
   triggers {
-    githubPush()  // This triggers the pipeline when a push is made to the GitHub repositoryy
+    githubPush()  // This triggers the pipeline when a push is made to the GitHub repository
   }
 
   stages {
+    // Stage to checkout the code from GitHub
+    stage('Checkout') {
+        steps {
+            checkout scm  // Checkout the code from GitHub
+        }
+    }
+    
+    // Stage to check for changes in the specific folder on repository
+    stage('Check for Changes in Specific Folder') {
+        steps {
+            script {
+                // Get the list of files that have changed in the commit
+                def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
+                echo "Changed Files: ${changedFiles}"
+
+                // Check if any of the changed files are in the TARGET_FOLDER
+                if (!changedFiles.contains(TARGET_FOLDER)) {
+                    echo "No changes in the folder ${TARGET_FOLDER}. Skipping pipeline."
+                    currentBuild.result = 'SUCCESS' // Mark the build as successful but do not run the build steps
+                    return // Exit early, skipping the build steps
+                }
+            }
+        }
+    }
+
+    // Stage for building and pushing to ECR (only if the folder was changed)
     stage('Build & Push to ECR') {
       when {
-        changeset "nodeapp/**"  // Only trigger when files in the "nodeapp" folder are changed
+        expression {
+            // Check if the file changes include any changes in the target folder
+            def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
+            return changedFiles.contains('nodeapp/')
+        }
       }
       steps {
         container('kaniko') {
@@ -78,6 +109,7 @@ pipeline {
       }
     }
 
+    // Stage for notifying Slack
     stage('Notify Slack') {
       steps {
         script {
