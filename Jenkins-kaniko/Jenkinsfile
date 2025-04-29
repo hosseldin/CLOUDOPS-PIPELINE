@@ -74,39 +74,34 @@ pipeline {
     }
 
     // Stage for building and pushing to ECR (only if the folder was changed)
-    stage('Build & Push to ECR') {
-      when {
-        expression {
-            // Check if the file changes include any changes in the target folder
-            def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
-            return changedFiles.contains('nodeapp/')
-        }
-      }
-      steps {
-        container('kaniko') {
-          script {
-            // Configure Docker credentials for ECR
-            sh """
-              # Create the Docker config directory
-              mkdir -p /kaniko/.docker
+    stage('Build and Push to ECR') {
+        steps {
+            script {
+                // Get timestamp (format: YYYYMMDD-HHMMSS)
+                def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
+                
+                // Clean up branch name (remove 'origin/', 'feature/', etc.)
+                def gitBranch = env.GIT_BRANCH
+                    .replace('origin/', '')
+                    .replace('feature/', 'feat-')
+                    .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
+                
+                // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')
+                def imageTag = "${gitBranch}-${timestamp}"
 
-              # Create config.json with ECR credentials helper
-              echo '{
-                "credHelpers": {
-                  "${ECR_REGISTRY}": "ecr-login"
-                }
-              }' > /kaniko/.docker/config.json
+                sh """
+                    mkdir -p /kaniko/.docker
+                    echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
 
-              # Build and push using Kaniko
-              /kaniko/executor \
-                --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
-                --context-sub-path=nodeapp \
-                --dockerfile=Dockerfile \
-                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER}
-            """
-          }
+                    /kaniko/executor \
+                    --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+                    --context-sub-path=nodeapp \
+                    --dockerfile=Dockerfile \
+                    --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
+                """
+                echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
+            }
         }
-      }
     }
 
     // Stage for notifying Slack
@@ -142,3 +137,77 @@ pipeline {
     }
   }
 }
+
+
+
+
+
+
+
+// stage('Build and Push to ECR') {
+//   steps {
+//     script {
+//       // Get timestamp (format: YYYYMMDD-HHMMSS)
+//       def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
+      
+//       // Clean up branch name (remove 'origin/', 'feature/', etc.)
+//       def gitBranch = env.GIT_BRANCH
+//         .replace('origin/', '')
+//         .replace('feature/', 'feat-')
+//         .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
+      
+//       // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')
+//       def imageTag = "${gitBranch}-${timestamp}"
+
+//       sh """
+//         mkdir -p /kaniko/.docker
+//         echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
+
+//         /kaniko/executor \
+//           --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+//           --context-sub-path=nodeapp \
+//           --dockerfile=Dockerfile \
+//           --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
+//       """
+      
+//       echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
+//     }
+//   }
+// }
+
+
+
+// stage('Build & Push to ECR') {
+//       when {
+//         expression {
+//             // Check if the file changes include any changes in the target folder
+//             def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
+//             return changedFiles.contains('nodeapp/')
+//         }
+//       }
+//       steps {
+//         container('kaniko') {
+//           script {
+//             // Configure Docker credentials for ECR
+//             sh """
+//               # Create the Docker config directory
+//               mkdir -p /kaniko/.docker
+
+//               # Create config.json with ECR credentials helper
+//               echo '{
+//                 "credHelpers": {
+//                   "${ECR_REGISTRY}": "ecr-login"
+//                 }
+//               }' > /kaniko/.docker/config.json
+
+//               # Build and push using Kaniko
+//               /kaniko/executor \
+//                 --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+//                 --context-sub-path=nodeapp \
+//                 --dockerfile=Dockerfile \
+//                 --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER}
+//             """
+//           }
+//         }
+//       }
+//     }
