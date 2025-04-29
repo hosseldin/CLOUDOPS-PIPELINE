@@ -43,11 +43,14 @@ pipeline {
   }
 
   triggers {
-    githubPush()  // This triggers the pipeline when a push is made to the GitHub repositoryyy
+    githubPush()  // This triggers the pipeline when a push is made to the GitHub repository
   }
 
   stages {
     stage('Build & Push to ECR') {
+      when {
+        changeset "nodeapp/**"  // Only trigger when files in the "nodeapp" folder are changed
+      }
       steps {
         container('kaniko') {
           script {
