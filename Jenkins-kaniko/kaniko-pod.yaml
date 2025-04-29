@@ -22,9 +22,9 @@ spec:
           name: aws-credentials
           key: AWS_SECRET_ACCESS_KEY
     volumeMounts:
-    - name: aws-config
-      mountPath: /kaniko/.aws
+      - name: aws-config
+        mountPath: /kaniko/.aws
   volumes:
-  - name: aws-config
-    secret:
-      secretName: aws-credentials
+    - name: aws-config
+      secret:
+        secretName: aws-credentials
