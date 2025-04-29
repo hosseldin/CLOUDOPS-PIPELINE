@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "app_repo" {
-  name                 = "node-app-jenkins"
+  name = "node-app-jenkins"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -72,5 +72,5 @@ output "ecr_profile" {
 
 output "aws_ecr_repository" {
   value = aws_ecr_repository.app_repo.repository_url
-  
+
 }
