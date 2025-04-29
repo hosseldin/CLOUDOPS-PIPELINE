@@ -36,7 +36,7 @@ pipeline {
               mkdir -p /kaniko/.docker
               echo '{
                 "credHelpers": {
-                  "${ECR_REGISTRY}": "ecr-login"
+                  "'\$ECR_REGISTRY'": "ecr-login"
                 }
               }' > /kaniko/.docker/config.json
 
