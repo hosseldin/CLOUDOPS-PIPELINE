@@ -28,3 +28,8 @@ terraform.tfvars
 *.pem
 *.key
 *.pub
+
+# Ignore credentials in terraform (if any are stored)
+terraform/*.pem
+terraform/*.key
+terraform/*.pub
