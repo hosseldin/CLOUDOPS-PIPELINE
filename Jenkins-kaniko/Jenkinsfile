@@ -119,7 +119,7 @@ pipeline {
                     [
                     fallback: "Build #${env.BUILD_NUMBER} finished",
                     color: '#36a64f',
-                    title: "✅ Build #${env.BUILD_NUMBER} Complete",
+                    title: "Build #${env.BUILD_NUMBER} Complete",
                     text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
                     fields: [
                         [
