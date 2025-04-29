@@ -1,7 +1,7 @@
 pipeline {
   agent {
     kubernetes {
-      yaml """ 
+      yaml '''
         apiVersion: v1
         kind: Pod
         metadata:
@@ -9,30 +9,30 @@ pipeline {
           namespace: jenkins-ns
         spec:
           containers:
-          - name: kaniko
-            image: gcr.io/kaniko-project/executor:debug
-            command:
-            - /busybox/cat
-            tty: true
-            env:
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: aws-credentials
-                  key: AWS_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: aws-credentials
-                  key: AWS_SECRET_ACCESS_KEY
-            volumeMounts:
-            - name: aws-config
-              mountPath: /kaniko/.aws
+            - name: kaniko
+              image: gcr.io/kaniko-project/executor:debug
+              command:
+                - /busybox/cat
+              tty: true
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-credentials
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-credentials
+                      key: AWS_SECRET_ACCESS_KEY
+              volumeMounts:
+                - name: aws-config
+                  mountPath: /kaniko/.aws
           volumes:
             - name: aws-config
               secret:
                 secretName: aws-credentials
-      """
+      '''
     }
   }
 
@@ -43,42 +43,29 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-
     stage('Build & Push to ECR') {
-      when {
-        changeset "nodeapp/**"
-      }
       steps {
         container('kaniko') {
           script {
-            sh '''
-            echo "=== Debug: Workspace Path ==="
-            pwd
-            echo "=== Debug: List workspace ==="
-            ls -la
+            // Configure Docker credentials for ECR
+            sh """
+              # Create the Docker config directory
+              mkdir -p /kaniko/.docker
 
-            # Create Docker config for ECR
-            mkdir -p /kaniko/.docker
-            cat > /kaniko/.docker/config.json <<EOF
-            {
+              # Create config.json with ECR credentials helper
+              echo '{
                 "credHelpers": {
-                    "$ECR_REGISTRY": "ecr-login"
+                  "${ECR_REGISTRY}": "ecr-login"
                 }
-            }
-            EOF
+              }' > /kaniko/.docker/config.json
 
-            # Build and push using Kaniko
-            /kaniko/executor \
-                --context=$PWD \
+              # Build and push using Kaniko
+              /kaniko/executor \
+                --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
                 --context-sub-path=nodeapp \
                 --dockerfile=Dockerfile \
-                --destination=$ECR_REGISTRY/$ECR_REPOSITORY:v$BUILD_NUMBER
-            '''
+                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER}
+            """
           }
         }
       }
