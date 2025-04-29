@@ -55,7 +55,7 @@ pipeline {
         }
     }
     
-    // Stage to check for changes in the specific folder on repository
+    // Stage to check for changes in the specific folder on repositoryy
     stage('Check for Changes in Specific Folder') {
         steps {
             script {
