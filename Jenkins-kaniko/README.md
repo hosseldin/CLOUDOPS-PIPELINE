@@ -1,5 +1,8 @@
 # Jenkins + Kaniko + ECR Pipeline Setup
 
+Access from 
+http://k8s-jenkinsn-jenkins-f2c93cac70-1789595189.us-east-1.elb.amazonaws.com/
+
 How to build and push Docker images using **Kaniko** in a **Kubernetes** environment with **Jenkins**, storing images in **Amazon ECR**.
 
 ---
