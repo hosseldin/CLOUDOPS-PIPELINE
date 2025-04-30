@@ -88,7 +88,9 @@ pipeline {
             container('kaniko') {
                 script {
                     // Get timestamp (format: YYYYMMDD-HHMMSS)
-                    def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
+                    def timestamp = sh(
+                        returnStdout: true,
+                        script: 'TZ="Africa/Cairo" date +%Y%m%d-%H%M%S').trim()
                     
                     // Clean up branch name (remove 'origin/', 'feature/', etc.)
                     def gitBranch = env.GIT_BRANCH
