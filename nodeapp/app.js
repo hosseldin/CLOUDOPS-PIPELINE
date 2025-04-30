@@ -13,13 +13,29 @@ const pool = mysql.createPool({
 app.get("/db", (req, res) => {
     pool.getConnection(function (err, connection) {
         if (err) {
-            res.send("db connection failed");
             console.error('Database connection failed: ' + err.stack);
-            return;
+            return res.send(`
+                <html>
+                    <head><title>DB Connection</title></head>
+                    <body style="font-family: Arial; background-color: #ffe6e6; padding: 20px;">
+                        <h1 style="color: red;">❌ Database connection failed</h1>
+                    </body>
+                </html>
+            `);
         }
-        res.send("db connection successful finished pipeline");
+
         console.log('Connected to database.');
-        connection.release(); // release back to the pool
+        connection.release();
+
+        res.send(`
+            <html>
+                <head><title>DB Connection</title></head>
+                <body style="font-family: Arial; background-color: #e6ffe6; padding: 20px;">
+                    <h1 style="color: green;">✅ DB connection successful</h1>
+                    <p>Pipeline completed successfully.</p>
+                </body>
+            </html>
+        `);
     });
 });
 
@@ -34,19 +50,31 @@ client.on('error', err => {
 });
 
 app.get('/redis', (req, res) => {
-
     client.set('foo', 'bar', (error, rep) => {
         if (error) {
             console.log(error);
-            res.send("redis connection failed");
-            return;
+            return res.send(`
+                <html>
+                    <head><title>Redis Connection</title></head>
+                    <body style="font-family: Arial; background-color: #ffe6e6; padding: 20px;">
+                        <h1 style="color: red;">❌ Redis connection failed</h1>
+                    </body>
+                </html>
+            `);
         }
-        if (rep) {                          //JSON objects need to be parsed after reading from redis, since it is stringified before being stored into cache                      
-            console.log(rep);
-            res.send("Redis is successfully connected HOSdasdsAA and mourad");
-        }
-    })
-})
+
+        console.log(rep);
+        res.send(`
+            <html>
+                <head><title>Redis Connection</title></head>
+                <body style="font-family: Arial; background-color: #e6ffe6; padding: 20px;">
+                    <h1 style="color: green;">✅ Redis connected successfully</h1>
+                    <p>Message: Redis is working (HOSdasdsAA and mourad)</p>
+                </body>
+            </html>
+        `);
+    });
+});
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
