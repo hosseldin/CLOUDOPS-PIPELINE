@@ -98,7 +98,7 @@ pipeline {
                         .replace('feature/', 'feat-')
                         .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
                     
-                    // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')
+                    // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')x
                     def imageTag = "${gitBranch}-${timestamp}"
 
                     sh """
