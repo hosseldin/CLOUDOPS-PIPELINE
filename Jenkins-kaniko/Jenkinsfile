@@ -1,61 +1,20 @@
 pipeline {
-  agent none  // Start with no agent to avoid unnecessary resource allocation
-
-  environment {
-    AWS_REGION = 'us-east-1'
-    ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
-    ECR_REPOSITORY = 'node-app-jenkins'
-    TARGET_FOLDER = 'nodeapp'
-  }
-
-  triggers {
-    githubPush()
-  }
-
-  stages {
-    // --- Stage 1: Check for changes (agent-less) ---
-    stage('Check for Changes') {
-      agent any  // Use a lightweight agent (no need for Kaniko yet)
-      steps {
-        script {
-            // Get changed files
-            def changedFiles = sh(
-            script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', 
-            returnStdout: true
-            ).trim()
-            
-            echo "Changed Files:\n${changedFiles}"
-
-            // Check if changes exist in TARGET_FOLDER
-            if (!changedFiles.contains(TARGET_FOLDER)) {
-            echo "⏭️ No changes in ${TARGET_FOLDER}. Skipping build."
-            currentBuild.result = 'NOT_BUILT'  // Mark as skipped
-            error("No changes detected")  // Halt pipeline with controlled error
-            } else {
-            echo "✅ Changes detected in ${TARGET_FOLDER}. Proceeding with build."
-            }
-          }
-        }
-      }
-    }
-
-    // --- Stage 2: Build and Push (only if changes detected) ---
-    stage('Build and Push to ECR') {
-      agent {
-        kubernetes {
-          yaml '''
-            apiVersion: v1
-            kind: Pod
-            metadata:
-              name: kaniko
-              namespace: jenkins-ns
-            spec:
-              containers:
-              - name: kaniko
-                image: gcr.io/kaniko-project/executor:debug
-                command: ["/busybox/cat"]
-                tty: true
-                env:
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kaniko
+          namespace: jenkins-ns
+        spec:
+          containers:
+            - name: kaniko
+              image: gcr.io/kaniko-project/executor:debug
+              command:
+                - /busybox/cat
+              tty: true
+              env:
                 - name: AWS_ACCESS_KEY_ID
                   valueFrom:
                     secretKeyRef:
@@ -66,215 +25,124 @@ pipeline {
                     secretKeyRef:
                       name: aws-credentials
                       key: AWS_SECRET_ACCESS_KEY
-                volumeMounts:
+              volumeMounts:
                 - name: aws-config
                   mountPath: /kaniko/.aws
-              volumes:
-              - name: aws-config
-                secret:
-                  secretName: aws-credentials
-          '''
-        }
-      }
-      steps {
-        container('kaniko') {
-          script {
-            def timestamp = sh(script: 'date +%Y%m%d-%H%M%S', returnStdout: true).trim()
-            def gitBranch = env.GIT_BRANCH
-              .replace('origin/', '')
-              .replace('feature/', 'feat-')
-              .replace('/', '-')
-            def imageTag = "${gitBranch}-${timestamp}"
+          volumes:
+            - name: aws-config
+              secret:
+                secretName: aws-credentials
+      '''
+    }
+  }
 
-            sh """
-              mkdir -p /kaniko/.docker
-              echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
-              /kaniko/executor \
-                --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
-                --context-sub-path=${TARGET_FOLDER} \
-                --dockerfile=Dockerfile \
-                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
-            """
-            echo "✅ Pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
-          }
+  environment {
+    AWS_REGION = 'us-east-1'
+    ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
+    ECR_REPOSITORY = 'node-app-jenkins'
+    TARGET_FOLDER = 'nodeapp'  // Specify the folder you want to watch for changes
+  }
+
+  triggers {
+    githubPush()  // This triggers the pipeline when a push is made to the GitHub repository
+  }
+
+  stages {
+    // Stage to checkout the code from GitHub
+    stage('Checkout') {
+        steps {
+            checkout scm  // Checkout the code from GitHub
         }
-      }
+    }
+    
+    // Stage to check for changes in the specific folder on repositoryyy
+    stage('Check for Changes in Specific Folder') {
+        steps {
+            script {
+                // Get the list of files that have changed in the commit
+                def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
+                echo "Changed Files: ${changedFiles}"
+
+                // Check if any of the changed files are in the TARGET_FOLDER
+                if (!changedFiles.contains(TARGET_FOLDER)) {
+                    echo "No changes in the folder ${TARGET_FOLDER}. Skipping pipeline."
+                    currentBuild.result = 'SUCCESS' // Mark the build as successful but do not run the build steps
+                    return // Exit early, skipping the build steps
+                }
+            }
+        }
     }
 
-    // --- Stage 3: Notify Slack (only if build ran) ---
+    // Stage for building and pushing to ECR (only if the folder was changed)
+    stage('Build and Push to ECR') {
+        when {
+            expression {
+                // Check if the file changes include any changes in the target folder
+                def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
+                return changedFiles.contains('nodeapp/')
+            }
+        }
+        steps {
+            container('kaniko') {
+                script {
+                    // Get timestamp (format: YYYYMMDD-HHMMSS)
+                    def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
+                    
+                    // Clean up branch name (remove 'origin/', 'feature/', etc.)
+                    def gitBranch = env.GIT_BRANCH
+                        .replace('origin/', '')
+                        .replace('feature/', 'feat-')
+                        .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
+                    
+                    // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')
+                    def imageTag = "${gitBranch}-${timestamp}"
+
+                    sh """
+                        mkdir -p /kaniko/.docker
+                        echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
+
+                        /kaniko/executor \
+                        --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+                        --context-sub-path=nodeapp \
+                        --dockerfile=Dockerfile \
+                        --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
+                    """
+                    echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
+                }
+            }
+        }
+    }
+
+    // Stage for notifying Slack
     stage('Notify Slack') {
-      agent any  // Lightweight agent
-      when {
-        expression { currentBuild.result != null }  // Only run if build executed
-      }
       steps {
-        slackSend(
-          channel: 'eks-jenkins-notifications',
-          attachments: [[
-            color: '#36a64f',
-            title: "Build #${env.BUILD_NUMBER} Complete",
-            text: """
-              Project: *${env.JOB_NAME}*
-              Branch: *${env.GIT_BRANCH}*
-              Image Tag: *${imageTag}*
-            """,
-            fields: [
-              [ title: "Duration", value: "${currentBuild.durationString}", short: true ]
-            ]
-          ]]
-        )
+        script {
+            slackSend(
+                channel: 'eks-jenkins-notifications',
+                attachments: [
+                    [
+                    fallback: "Build #${env.BUILD_NUMBER} finished",
+                    color: '#36a64f',
+                    title: "Build #${env.BUILD_NUMBER} Complete",
+                    text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
+                    fields: [
+                        [
+                        title: "Started by",
+                        value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}",
+                        short: true
+                        ],
+                        [
+                        title: "Duration",
+                        value: "${currentBuild.durationString}",
+                        short: true
+                        ]
+                    ],
+                    image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+                    ]
+                ]
+            )
+        }
       }
     }
   }
 }
-
-
-// pipeline {
-//   agent {
-//     kubernetes {
-//       yaml '''
-//         apiVersion: v1
-//         kind: Pod
-//         metadata:
-//           name: kaniko
-//           namespace: jenkins-ns
-//         spec:
-//           containers:
-//             - name: kaniko
-//               image: gcr.io/kaniko-project/executor:debug
-//               command:
-//                 - /busybox/cat
-//               tty: true
-//               env:
-//                 - name: AWS_ACCESS_KEY_ID
-//                   valueFrom:
-//                     secretKeyRef:
-//                       name: aws-credentials
-//                       key: AWS_ACCESS_KEY_ID
-//                 - name: AWS_SECRET_ACCESS_KEY
-//                   valueFrom:
-//                     secretKeyRef:
-//                       name: aws-credentials
-//                       key: AWS_SECRET_ACCESS_KEY
-//               volumeMounts:
-//                 - name: aws-config
-//                   mountPath: /kaniko/.aws
-//           volumes:
-//             - name: aws-config
-//               secret:
-//                 secretName: aws-credentials
-//       '''
-//     }
-//   }
-
-//   environment {
-//     AWS_REGION = 'us-east-1'
-//     ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
-//     ECR_REPOSITORY = 'node-app-jenkins'
-//     TARGET_FOLDER = 'nodeapp'  // Specify the folder you want to watch for changes
-//   }
-
-//   triggers {
-//     githubPush()  // This triggers the pipeline when a push is made to the GitHub repository
-//   }
-
-//   stages {
-//     // Stage to checkout the code from GitHub
-//     stage('Checkout') {
-//         steps {
-//             checkout scm  // Checkout the code from GitHub
-//         }
-//     }
-    
-//     // Stage to check for changes in the specific folder on repositoryyy
-//     stage('Check for Changes in Specific Folder') {
-//         steps {
-//             script {
-//                 // Get the list of files that have changed in the commit
-//                 def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
-//                 echo "Changed Files: ${changedFiles}"
-
-//                 // Check if any of the changed files are in the TARGET_FOLDER
-//                 if (!changedFiles.contains(TARGET_FOLDER)) {
-//                     echo "No changes in the folder ${TARGET_FOLDER}. Skipping pipeline."
-//                     currentBuild.result = 'SUCCESS' // Mark the build as successful but do not run the build steps
-//                     return // Exit early, skipping the build steps
-//                 }
-//             }
-//         }
-//     }
-
-//     // Stage for building and pushing to ECR (only if the folder was changed)
-//     stage('Build and Push to ECR') {
-//         when {
-//             expression {
-//                 // Check if the file changes include any changes in the target folder
-//                 def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
-//                 return changedFiles.contains('nodeapp/')
-//             }
-//         }
-//         steps {
-//             container('kaniko') {
-//                 script {
-//                     // Get timestamp (format: YYYYMMDD-HHMMSS)
-//                     def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
-                    
-//                     // Clean up branch name (remove 'origin/', 'feature/', etc.)
-//                     def gitBranch = env.GIT_BRANCH
-//                         .replace('origin/', '')
-//                         .replace('feature/', 'feat-')
-//                         .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
-                    
-//                     // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')
-//                     def imageTag = "${gitBranch}-${timestamp}"
-
-//                     sh """
-//                         mkdir -p /kaniko/.docker
-//                         echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
-
-//                         /kaniko/executor \
-//                         --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
-//                         --context-sub-path=nodeapp \
-//                         --dockerfile=Dockerfile \
-//                         --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
-//                     """
-//                     echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
-//                 }
-//             }
-//         }
-//     }
-
-//     // Stage for notifying Slack
-//     stage('Notify Slack') {
-//       steps {
-//         script {
-//             slackSend(
-//                 channel: 'eks-jenkins-notifications',
-//                 attachments: [
-//                     [
-//                     fallback: "Build #${env.BUILD_NUMBER} finished",
-//                     color: '#36a64f',
-//                     title: "Build #${env.BUILD_NUMBER} Complete",
-//                     text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
-//                     fields: [
-//                         [
-//                         title: "Started by",
-//                         value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}",
-//                         short: true
-//                         ],
-//                         [
-//                         title: "Duration",
-//                         value: "${currentBuild.durationString}",
-//                         short: true
-//                         ]
-//                     ],
-//                     image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
-//                     ]
-//                 ]
-//             )
-//         }
-//       }
-//     }
-//   }
-// }
-
