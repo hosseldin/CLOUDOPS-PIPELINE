@@ -102,6 +102,7 @@ pipeline {
                     def imageTag = "${gitBranch}-${timestamp}"
 
                     sh """
+                        export TZ="Africa/Cairo"
                         mkdir -p /kaniko/.docker
                         echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
 
