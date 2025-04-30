@@ -90,7 +90,7 @@ pipeline {
                     // Get timestamp (format: YYYYMMDD-HHMMSS)
                     def timestamp = sh(
                         returnStdout: true,
-                        script: 'TZ="Africa/Cairo" date +%Y%m%d-%H%M%S').trim()
+                        script: 'TZ="Africa/Cairo" date -d "+3 hours" +%Y%m%d-%H%M%S').trim()
                     
                     // Clean up branch name (remove 'origin/', 'feature/', etc.)
                     def gitBranch = env.GIT_BRANCH
