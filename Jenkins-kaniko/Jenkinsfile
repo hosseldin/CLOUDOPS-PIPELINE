@@ -68,12 +68,7 @@ pipeline {
         }
         steps {
             container('kaniko') {
-                script {
-                    // Get timestamp (format: YYYYMMDD-HHMMSS)
-                    def timestamp = sh(
-                        returnStdout: true,
-                        script: 'TZ="Africa/Cairo" date +%Y%m%d-%H%M%S').trim()
-                    
+                script {                    
                     // Using Jenkins' BUILD_NUMBER as the image tag
                     def imageTag = "v${BUILD_NUMBER}"
 
