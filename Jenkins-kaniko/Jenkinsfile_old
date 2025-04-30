@@ -56,6 +56,24 @@ pipeline {
             git url: 'https://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git', branch: 'main'
         }
     }
+    
+    // Stage to check for changes in the specific folder on repositoryyy
+    stage('Check for Changes in Specific Folder') {
+        steps {
+            script {
+                // Get the list of files that have changed in the commit
+                def changedFiles = sh(script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', returnStdout: true).trim()
+                echo "Changed Files: ${changedFiles}"
+
+                // Check if any of the changed files are in the TARGET_FOLDER
+                if (!changedFiles.contains(TARGET_FOLDER)) {
+                    echo "No changes in the folder ${TARGET_FOLDER}. Skipping pipeline."
+                    currentBuild.result = 'SUCCESS' // Mark the build as successful but do not run the build steps
+                    return // Exit early, skipping the build steps
+                }
+            }
+        }
+    }
 
     // Stage for building and pushing to ECR (only if the folder was changed)
     stage('Build and Push to ECR') {
@@ -74,8 +92,14 @@ pipeline {
                         returnStdout: true,
                         script: 'TZ="Africa/Cairo" date +%Y%m%d-%H%M%S').trim()
                     
-                    // Using Jenkins' BUILD_NUMBER as the image tag
-                    def imageTag = "v${BUILD_NUMBER}"
+                    // Clean up branch name (remove 'origin/', 'feature/', etc.)
+                    def gitBranch = env.GIT_BRANCH
+                        .replace('origin/', '')
+                        .replace('feature/', 'feat-')
+                        .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
+                    
+                    // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')x
+                    def imageTag = "${gitBranch}-${timestamp}"
 
                     sh """
                         export TZ="Africa/Cairo"
