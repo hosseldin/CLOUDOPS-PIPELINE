@@ -15,6 +15,8 @@ pipeline {
                 - /busybox/cat
               tty: true
               env:
+                - name: TZ
+                    value: "Africa/Cairo"  
                 - name: AWS_ACCESS_KEY_ID
                   valueFrom:
                     secretKeyRef:
