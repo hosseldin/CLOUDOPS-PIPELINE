@@ -219,7 +219,7 @@ pipeline {
 
               # Build and push using Kaniko
               /kaniko/executor \
-                --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+                --context=git://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git#refs/heads/main \
                 --context-sub-path=nodeapp \
                 --dockerfile=Dockerfile \
                 --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}

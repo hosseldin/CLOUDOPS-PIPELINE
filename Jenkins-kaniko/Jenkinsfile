@@ -107,7 +107,7 @@ pipeline {
                         echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
 
                         TZ="Africa/Cairo" /kaniko/executor \
-                        --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+                        --context=git://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git#refs/heads/main \
                         --context-sub-path=nodeapp \
                         --dockerfile=Dockerfile \
                         --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
