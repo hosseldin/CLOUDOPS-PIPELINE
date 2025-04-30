@@ -84,30 +84,31 @@ pipeline {
         }
         steps {
             container('kaniko') {
-            script {
-                // Get timestamp (format: YYYYMMDD-HHMMSS)
-                def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
-                
-                // Clean up branch name (remove 'origin/', 'feature/', etc.)
-                def gitBranch = env.GIT_BRANCH
-                    .replace('origin/', '')
-                    .replace('feature/', 'feat-')
-                    .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
-                
-                // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')
-                def imageTag = "${gitBranch}-${timestamp}"
+                script {
+                    // Get timestamp (format: YYYYMMDD-HHMMSS)
+                    def timestamp = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
+                    
+                    // Clean up branch name (remove 'origin/', 'feature/', etc.)
+                    def gitBranch = env.GIT_BRANCH
+                        .replace('origin/', '')
+                        .replace('feature/', 'feat-')
+                        .replace('/', '-')  // Handle sub-branches (e.g., 'feature/login' → 'feat-login')
+                    
+                    // Define image tag (e.g., 'main-20240427-142310' or 'feat-login-20240427-142310')
+                    def imageTag = "${gitBranch}-${timestamp}"
 
-                sh """
-                    mkdir -p /kaniko/.docker
-                    echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
+                    sh """
+                        mkdir -p /kaniko/.docker
+                        echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
 
-                    /kaniko/executor \
-                    --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
-                    --context-sub-path=nodeapp \
-                    --dockerfile=Dockerfile \
-                    --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
-                """
-                echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
+                        /kaniko/executor \
+                        --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
+                        --context-sub-path=nodeapp \
+                        --dockerfile=Dockerfile \
+                        --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
+                    """
+                    echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
+                }
             }
         }
     }
