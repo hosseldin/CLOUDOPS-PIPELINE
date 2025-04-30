@@ -53,7 +53,7 @@ pipeline {
     // Stage to checkout the code from GitHub
     stage('Checkout') {
         steps {
-            checkout scm  // Checkout the code from GitHub
+            git url: 'https://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git', branch: 'main'
         }
     }
     
