@@ -18,19 +18,22 @@ pipeline {
       agent any  // Use a lightweight agent (no need for Kaniko yet)
       steps {
         script {
-          // Get changed files
-          def changedFiles = sh(
+            // Get changed files
+            def changedFiles = sh(
             script: 'git diff --name-only $GIT_COMMIT^ $GIT_COMMIT', 
             returnStdout: true
-          ).trim()
-          
-          echo "Changed Files:\n${changedFiles}"
+            ).trim()
+            
+            echo "Changed Files:\n${changedFiles}"
 
-          // Check if changes exist in TARGET_FOLDER
-          if (!changedFiles.contains(TARGET_FOLDER)) {
+            // Check if changes exist in TARGET_FOLDER
+            if (!changedFiles.contains(TARGET_FOLDER)) {
             echo "⏭️ No changes in ${TARGET_FOLDER}. Skipping build."
-            currentBuild.result = 'SUCCESS'
-            return  // Exit early, skipping all subsequent stages
+            currentBuild.result = 'NOT_BUILT'  // Mark as skipped
+            error("No changes detected")  // Halt pipeline with controlled error
+            } else {
+            echo "✅ Changes detected in ${TARGET_FOLDER}. Proceeding with build."
+            }
           }
         }
       }
