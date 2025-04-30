@@ -1,4 +1,3 @@
-
 helm repo add external-secrets https://charts.external-secrets.io
 
 helm repo update
@@ -46,34 +45,35 @@ aws iam create-policy \
 
 kubectl create secret generic awssm-secret \
   -n external-secrets \
-  --from-literal=access-key-id= ******************** \
-  --from-literal=secret-access-key= *********************
+  --from-literal=access-key-id=*************** \
+  --from-literal=secret-access-key=*******************
 
 #Create a SecretStore Resource:
 #Create a file named aws-secret-store.yaml:
  
 
+Create a ClusterSecretStore (cluster-secret-store.yaml):
+
+yaml
 apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
+kind: ClusterSecretStore
 metadata:
-  name: aws-secret-store
-  namespace: external-secrets
+  name: aws-cluster-secret-store
 spec:
   provider:
     aws:
       service: SecretsManager
-      region: us-west-2
+      region: <YOUR_AWS_REGION>
       auth:
         secretRef:
           accessKeyIDSecretRef:
             name: awssm-secret
+            namespace: external-secrets
             key: access-key-id
           secretAccessKeySecretRef:
             name: awssm-secret
+            namespace: external-secrets
             key: secret-access-key
-
-
-kubectl apply -f aws-secret-store.yaml
 
 
 
@@ -81,81 +81,36 @@ kubectl apply -f aws-secret-store.yaml
 #For Database Credentials:
 #Create an ExternalSecret resource for database credentials (db-external-secret.yaml):
 
+aws secretsmanager create-secret \
+  --name myapp/database-credentials \
+  --secret-string '{"username":"root","password":"root"}'
+
+
+
 
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: database-credentials
-  namespace: <YOUR_APP_NAMESPACE>
+  namespace: argoapp
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: aws-secret-store
-    kind: SecretStore
-  target:
-    name: database-secret
-    creationPolicy: Owner
-  data:
-  - secretKey: username
-    remoteRef:
-      key: <AWS_SECRET_NAME_FOR_DB>
-      property: username
-  - secretKey: password
-    remoteRef:
-      key: <AWS_SECRET_NAME_FOR_DB>
-      property: password
+    name: aws-cluster-secret-store
+    kind: ClusterSecretStore
 
-
-#For Redis Credentials:
-#Create an ExternalSecret resource for Redis credentials (redis-external-secret.yaml):
-
-yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: redis-credentials
-  namespace: <YOUR_APP_NAMESPACE>
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: aws-secret-store
-    kind: SecretStore
-  target:
-    name: redis-secret
-    creationPolicy: Owner
-  data:
-  - secretKey: host
-    remoteRef:
-      key: <AWS_SECRET_NAME_FOR_REDIS>
-      property: host
-  - secretKey: port
-    remoteRef:
-      key: <AWS_SECRET_NAME_FOR_REDIS>
-      property: port
-  - secretKey: password
-    remoteRef:
-      key: <AWS_SECRET_NAME_FOR_REDIS>
-      property: password
-Apply both ExternalSecrets:
-
-
-
+    
 
 kubectl apply -f db-external-secret.yaml
-kubectl apply -f redis-external-secret.yaml
+
 
 
 
 
 #Check the created Kubernetes secrets:
 
-kubectl get secrets -n <YOUR_APP_NAMESPACE>
+kubectl get secrets -n argoapp
 
-
-
-
-#Check the status of ExternalSecrets:
-kubectl get externalsecrets -n <YOUR_APP_NAMESPACE>
 
 
 
