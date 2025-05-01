@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent none  // Declaring agent none, we will define nodes manually inside stages
 
     environment {
         AWS_REGION = 'us-east-1'
@@ -15,6 +15,7 @@ pipeline {
     stages {
         // Stage to checkout the code from GitHub
         stage('Checkout') {
+            agent { label 'jenkins-agent' }  // Define a node (or Kubernetes pod) for this stage
             steps {
                 git url: 'https://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git', branch: 'main'
             }
@@ -57,6 +58,7 @@ pipeline {
 
         // Stage for notifying Slack
         stage('Notify Slack') {
+            agent { label 'jenkins-agent' }  // Define a node (or Kubernetes pod) for this stage
             steps {
                 script {
                     slackSend(
@@ -88,6 +90,7 @@ pipeline {
         }
     }
 }
+
 
 
 
