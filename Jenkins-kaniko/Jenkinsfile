@@ -1,57 +1,32 @@
-// Jenkinsfile
-@Library('shared-library') _
-
-def envVars = load 'environment.groovy'
+// Load the stage loader utility
+def stageLoader = load 'loadStages.groovy'
 
 pipeline {
-  agent {
-    kubernetes {
-      yaml file('pod-template.yaml')
-    }
-  }
-
-  environment {
-    AWS_REGION = envVars.AWS_REGION
-    ECR_REGISTRY = envVars.ECR_REGISTRY
-    ECR_REPOSITORY = envVars.ECR_REPOSITORY
-    TARGET_FOLDER = envVars.TARGET_FOLDER
-  }
-
-  triggers {
-    githubPush()
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        script {
-          checkoutStage()
+    agent {
+        kubernetes {
+            yaml file('pod-template.yaml')
         }
-      }
     }
 
-    stage('Build & Scan') {
-      steps {
-        script {
-          buildScanStage()
-        }
-      }
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REPOSITORY = 'node-app-jenkins'
+        TARGET_FOLDER = 'nodeapp'
     }
 
-    stage('Push to ECR') {
-      steps {
-        script {
-          pushEcrStage()
-        }
-      }
+    triggers {
+        githubPush()
     }
 
-    stage('Notify') {
-      steps {
-        script {
-          notifyStage()
+    stages {
+        stage('Initialize') {
+            steps {
+                script {
+                    // Load all stages
+                    stageLoader.loadStages()
+                }
+            }
         }
-      }
     }
-  }
 }
