@@ -52,5 +52,5 @@ echo "Access SonarQube at: http://$(kubectl get svc -n sonarqube sonarqube-sonar
 
 # Default credentials:
 # Username: admin
-# Password: admin (change immediately)
+# Password: admin 
 ```
