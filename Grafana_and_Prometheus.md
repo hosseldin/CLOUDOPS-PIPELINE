@@ -44,4 +44,5 @@ kubectl get pods -n monitoring
 ```
 
 This command will show the pods running in the `monitoring` namespace, including Prometheus, Grafana, and other related components.
+![image](https://github.com/user-attachments/assets/c1636689-8f54-4cff-b36a-3c71d52b73b6)
 
