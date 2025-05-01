@@ -10,30 +10,30 @@ pipeline {
             spec:
                 containers:
                     - name: kaniko
-                        image: gcr.io/kaniko-project/executor:debug
-                        command:
-                            - /busybox/cat
-                        tty: true
-                        env:
-                            - name: TZ
-                                value: "Africa/Cairo"
-                            - name: AWS_ACCESS_KEY_ID
-                                valueFrom:
-                                    secretKeyRef:
-                                        name: aws-credentials
-                                        key: AWS_ACCESS_KEY_ID
-                            - name: AWS_SECRET_ACCESS_KEY
-                                valueFrom:
-                                    secretKeyRef:
-                                        name: aws-credentials
-                                        key: AWS_SECRET_ACCESS_KEY
-                        volumeMounts:
-                            - name: aws-config
-                                mountPath: /kaniko/.aws
+                      image: gcr.io/kaniko-project/executor:debug
+                      command:
+                          - /busybox/cat
+                      tty: true
+                      env:
+                          - name: TZ
+                            value: "Africa/Cairo"
+                          - name: AWS_ACCESS_KEY_ID
+                            valueFrom:
+                                secretKeyRef:
+                                    name: aws-credentials
+                                    key: AWS_ACCESS_KEY_ID
+                          - name: AWS_SECRET_ACCESS_KEY
+                            valueFrom:
+                                secretKeyRef:
+                                    name: aws-credentials
+                                    key: AWS_SECRET_ACCESS_KEY
+                      volumeMounts:
+                          - name: aws-config
+                            mountPath: /kaniko/.aws
                 volumes:
                     - name: aws-config
-                        secret:
-                            secretName: aws-credentials
+                      secret:
+                          secretName: aws-credentials
             '''
         }
     }
@@ -50,7 +50,7 @@ pipeline {
     }
 
     stages {
-    // Stage to checkout the code from GitHub
+        // Stage to checkout the code from GitHub
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git', branch: 'main'
@@ -90,23 +90,23 @@ pipeline {
                         channel: 'eks-jenkins-notifications',
                         attachments: [
                             [
-                            fallback: "Build #${env.BUILD_NUMBER} finished",
-                            color: '#36a64f',
-                            title: "Build #${env.BUILD_NUMBER} Complete",
-                            text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
-                            fields: [
-                                [
-                                title: "Started by",
-                                value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}",
-                                short: true
+                                fallback: "Build #${env.BUILD_NUMBER} finished",
+                                color: '#36a64f',
+                                title: "Build #${env.BUILD_NUMBER} Complete",
+                                text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
+                                fields: [
+                                    [
+                                        title: "Started by",
+                                        value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}",
+                                        short: true
+                                    ],
+                                    [
+                                        title: "Duration",
+                                        value: "${currentBuild.durationString}",
+                                        short: true
+                                    ]
                                 ],
-                                [
-                                title: "Duration",
-                                value: "${currentBuild.durationString}",
-                                short: true
-                                ]
-                            ],
-                            image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+                                image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
                             ]
                         ]
                     )
@@ -115,3 +115,43 @@ pipeline {
         }
     }
 }
+
+
+    // agent {
+    //     kubernetes {
+    //         yaml '''
+    //         apiVersion: v1
+    //         kind: Pod
+    //         metadata:
+    //             name: kaniko
+    //             namespace: jenkins-ns
+    //         spec:
+    //             containers:
+    //                 - name: kaniko
+    //                     image: gcr.io/kaniko-project/executor:debug
+    //                     command:
+    //                         - /busybox/cat
+    //                     tty: true
+    //                     env:
+    //                         - name: TZ
+    //                             value: "Africa/Cairo"
+    //                         - name: AWS_ACCESS_KEY_ID
+    //                             valueFrom:
+    //                                 secretKeyRef:
+    //                                     name: aws-credentials
+    //                                     key: AWS_ACCESS_KEY_ID
+    //                         - name: AWS_SECRET_ACCESS_KEY
+    //                             valueFrom:
+    //                                 secretKeyRef:
+    //                                     name: aws-credentials
+    //                                     key: AWS_SECRET_ACCESS_KEY
+    //                     volumeMounts:
+    //                         - name: aws-config
+    //                             mountPath: /kaniko/.aws
+    //             volumes:
+    //                 - name: aws-config
+    //                     secret:
+    //                         secretName: aws-credentials
+    //         '''
+    //     }
+    // }
