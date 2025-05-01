@@ -1,69 +1,113 @@
 
-export AWS_DEFAULT_OUTPUT=json # ❗ Use JSON output for this tutorial
-export AWS_DEFAULT_REGION=us-east-1   # ❗ Your AWS region.
+# 🛠️ **Setting up AWS Route 53 with EKS and ELB**
 
-export DOMAIN_NAME=itiproject.net
+This guide walks you through configuring AWS Route 53 with your EKS cluster and connecting it to an external load balancer (ELB). Additionally, we cover how to provision an SSL certificate through AWS ACM (AWS Certificate Manager) for HTTPS support.
 
+## 🔧 **Prerequisites**
+
+- AWS Account with permissions to manage Route 53, IAM, and ACM.
+- EKS Cluster up and running.
+- AWS CLI installed and configured.
+- kubectl installed and configured.
+
+## 📌 **Step 1: Create AWS Route 53 Hosted Zone**
+
+Create a hosted zone in Route 53 to manage your domain's DNS records.
+
+```bash
+export DOMAIN_NAME=itiproject.site
 
 aws route53 create-hosted-zone --caller-reference $(uuidgen) --name $DOMAIN_NAME
+```
 
+### Add Name Servers to Your Domain
 
+Once the hosted zone is created, Route 53 provides a set of name servers. Update your domain’s DNS settings with the following name servers:
 
-add this
+```json
+"DelegationSet": {
+    "NameServers": [
+        "ns-441.awsdns-55.com",
+        "ns-1189.awsdns-20.org",
+        "ns-655.awsdns-17.net",
+        "ns-1730.awsdns-24.co.uk"
+    ]
+}
+```
 
-    "DelegationSet": {
-        "NameServers": [
-            "ns-441.awsdns-55.com",
-            "ns-1189.awsdns-20.org",
-            "ns-655.awsdns-17.net",
-            "ns-1730.awsdns-24.co.uk"
-        ]
-    }
+Update your domain registrar with these name servers to delegate the DNS resolution to Route 53.
 
+---
 
-to your domain
+## 📡 **Step 2: Set Up Load Balancer for EKS**
 
-export CLUSTER=eks-cluster
+In EKS, expose your application via an external Load Balancer (ELB). To do so, modify your service YAML as follows:
 
-helm install cert-manager cert-manager \
-  --repo https://charts.jetstack.io \
-  --namespace cert-manager \
-  --create-namespace \
-  --set crds.enabled=true
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+spec:
+  selector:
+    app: myapp
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
+```
 
+This configuration will create an external load balancer with a public DNS that can be used to point your domain to it.
 
-kubectl explain Certificate
-kubectl explain CertificateRequest
-kubectl explain Issuer
+---
 
-# connect aws route53 with your elb
-# alias-record.json
-{
-  "Comment": "Creating an alias record",
-  "Changes": [
-    {
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "www.\($DOMAIN_NAME)",
-        "Type": "A",
-        "AliasTarget": {
-          "HostedZoneId": .CanonicalHostedZoneNameID,
-          "DNSName": .CanonicalHostedZoneName,
-          "EvaluateTargetHealth": false
-        }
-      }
-    }
-  ]
-}'
+## 🔒 **Step 3: Manually Provision SSL Certificate via AWS ACM**
 
-# from this commad you can get load balancer dns and HostedZoneId of it
+To enable HTTPS for your domain, you need to provision an SSL certificate via **AWS ACM (AWS Certificate Manager)** and associate it with your load balancer.
+
+### Request a Certificate in ACM
+
+1. Navigate to **AWS ACM** in the AWS Console.
+2. Request a **public certificate** for your domain `www.itiproject.site`.
+3. Add domain validation (DNS validation is typically the easiest option).
+4. After validation, the certificate will be issued.
+
+---
+
+## 🔗 **Step 4: Attach SSL Certificate to Load Balancer (ELB)**
+
+Now, you can attach the issued SSL certificate to your ELB:
+
+1. Navigate to **EC2 > Load Balancers** in the AWS Console.
+2. Select your load balancer (created earlier for your service).
+3. Under the **Listeners** tab, click **View/edit certificates**.
+4. Add the SSL certificate you just created by selecting **Add Listener** for HTTPS on port 443.
+5. Associate the certificate with the listener.
+
+---
+
+## 🌐 **Step 5: Update Route 53 to Point to Load Balancer**
+
+Now, you need to update your Route 53 DNS settings to point to the newly created Load Balancer. First, retrieve the Load Balancer DNS name and Hosted Zone ID:
+
+```bash
 aws elbv2 describe-load-balancers
+```
 
-# for example
+Example output:
+
+```bash
 k8s-argoapp-dbingres-2c826f4fcb-335049984.us-east-1.elb.amazonaws.com
 Z35SXDOTRQ7X7K
+```
 
-# for example 
+Then create an **A record** in Route 53 to alias your domain to the Load Balancer's DNS name:
+
+**alias-record.json**
+
+```json
 {
   "Comment": "Creating an alias record",
   "Changes": [
@@ -74,177 +118,40 @@ Z35SXDOTRQ7X7K
         "Type": "A",
         "AliasTarget": {
           "HostedZoneId": "Z35SXDOTRQ7X7K",
-          "DNSName": "k8s-argoapp-dbingres-2c826f4fcb-1833408552.us-east-1.elb.amazonaws.com",
+          "DNSName": "k8s-argoapp-dbingres-2c826f4fcb-335049984.us-east-1.elb.amazonaws.com",
           "EvaluateTargetHealth": false
         }
       }
     }
   ]
 }
+```
 
+Apply the changes:
 
+```bash
+aws route53 change-resource-record-sets --hosted-zone-id Z35SXDOTRQ7X7K --change-batch file://alias-record.json
+```
 
-# get hosted_zone_id of aws route53 zone
-HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name --dns-name "itiproject.site" --query "HostedZones[0].Id" --output text)
+This creates a DNS alias record for `www.itiproject.site` that points to the ELB, allowing access to your application via HTTPS.
 
-# this command will create a new record that point to ingress of out application
-aws route53 change-resource-record-sets --hosted-zone-id Z0456625ON2PZX3C127J --change-batch file://alias-record.json
-
-
-# clusterissuer-selfsigned.yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: selfsigned
-spec:
-  selfSigned: {}
-
-kubectl apply -f clusterissuer-selfsigned.yaml
-
-
-# certificate.yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: www
-  namespace: argoapp
-spec:
-  secretName: www-tls
-  revisionHistoryLimit: 1
-  privateKey:
-    rotationPolicy: Always
-  commonName: www.$DOMAIN_NAME
-  dnsNames:
-    - www.$DOMAIN_NAME
-  usages:
-    - digital signature
-    - key encipherment
-    - server auth
-  issuerRef:
-    name: selfsigned
-    kind: ClusterIssuer
-
-
-envsubst < certificate.yaml | kubectl apply -f -
-
-# install cmctl  "go should be installed"
-OS=$(go env GOOS); ARCH=$(go env GOARCH); curl -fsSL -o cmctl https://github.com/cert-manager/cmctl/releases/latest/download/cmctl_${OS}_${ARCH}
-chmod +x cmctl
-sudo mv cmctl /usr/local/bin
-
-
-
-# to make load balancer public add this to yaml
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-internal: "false"
-
-
-
-eksctl utils associate-iam-oidc-provider --cluster $CLUSTER --approve
-
-aws iam create-policy \
-     --policy-name cert-manager-acme-dns01-route53 \
-     --description "This policy allows cert-manager to manage ACME DNS01 records in Route53 hosted zones. See https://cert-manager.io/docs/configuration/acme/dns01/route53" \
-     --policy-document file:///dev/stdin <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "route53:GetChange",
-      "Resource": "arn:aws:route53:::change/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "route53:ChangeResourceRecordSets",
-        "route53:ListResourceRecordSets"
-      ],
-      "Resource": "arn:aws:route53:::hostedzone/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "route53:ListHostedZonesByName",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-
-
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-eksctl create iamserviceaccount \
-  --name cert-manager-acme-dns01-route53 \
-  --namespace cert-manager \
-  --cluster ${CLUSTER} \
-  --role-name cert-manager-acme-dns01-route53 \
-  --attach-policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/cert-manager-acme-dns01-route53 \
-  --approve
-
-
-# rbac.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: cert-manager-acme-dns01-route53-tokenrequest
-  namespace: cert-manager
-rules:
-  - apiGroups: ['']
-    resources: ['serviceaccounts/token']
-    resourceNames: ['cert-manager-acme-dns01-route53']
-    verbs: ['create']
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: cert-manager-acme-dns01-route53-tokenrequest
-  namespace: cert-manager
-subjects:
-  - kind: ServiceAccount
-    name: cert-manager
-    namespace: cert-manager
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: cert-manager-acme-dns01-route53-tokenrequest
+
+## 🛡️ **Step 6: Verify HTTPS Access**
+
+To verify that HTTPS is working properly, open a browser and navigate to:
+
+```
+https://www.itiproject.site
+```
+
+You should now be able to access your application securely with a valid SSL certificate.
+
+---
 
 
-kubectl apply -f rbac.yaml
+### 🔧 **Troubleshooting Tips**
 
-
-# clusterissuer-lets-encrypt-staging.yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-staging
-spec:
-  acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: menasafwat952@gmail.com
-    privateKeySecretRef:
-      name: letsencrypt-staging
-    solvers:
-    - dns01:
-        route53:
-          region: us-east-1
-          role: arn:aws:iam::${AWS_ACCOUNT_ID}:role/cert-manager-acme-dns01-route53
-          auth:
-            kubernetes:
-              serviceAccountRef:
-                name: cert-manager-acme-dns01-route53
-
-
-kubectl apply -f clusterissuer-lets-encrypt-staging.yaml 
-
-kubectl describe clusterissuer letsencrypt-staging
-
-# to make sure that certificate is issued
-cmctl status certificate www
-cmctl inspect secret www-tls
-
-
-
-
-argocd subdomain
-
-https://medium.com/@tanmoysantra67/setting-up-argocd-with-https-on-kubernetes-using-aws-alb-d29e58b80d72
+- Ensure the DNS propagation is complete after updating the name servers in your domain registrar.
+- If the SSL certificate fails to validate, double-check your DNS settings in Route 53.
+- Ensure that your security groups allow inbound traffic on port 443 for HTTPS.
