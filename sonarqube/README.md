@@ -90,7 +90,7 @@ helm upgrade --install sonarqube sonarqube/sonarqube \
 kubectl get svc -n sonarqube sonarqube-sonarqube -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 
 # Access in browser (port 9000)
-echo "Access SonarQube at: http://$(kubectl get svc -n sonarqube sonarqube-sonarqube -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):9000"
+echo "Access SonarQube at: http://$(kubectl get svc sonarqube-sonarqube -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):9000"
 
 # Default credentials:
 # Username: admin
