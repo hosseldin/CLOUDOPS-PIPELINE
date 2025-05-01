@@ -9,3 +9,9 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --set grafana.adminPassword=admin
 
 
+
+
+jenkins
+
+
+kubectl delete validatingwebhookconfiguration ingress-nginx-admission
