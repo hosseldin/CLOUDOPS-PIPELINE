@@ -33,3 +33,5 @@ terraform.tfvars
 terraform/*.pem
 terraform/*.key
 terraform/*.pub
+
+terraform/my-aws-key*

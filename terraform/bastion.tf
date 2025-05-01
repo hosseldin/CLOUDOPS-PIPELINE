@@ -92,33 +92,33 @@ resource "aws_iam_role_policy_attachment" "bastion_eks_describe" {
   policy_arn = aws_iam_policy.eks_full_access_for_bastion.arn
 }
 
-resource "aws_iam_policy" "eks_oidc_management" {
-  name        = "eks-oidc-management"
-  description = "Permissions to manage OIDC provider for EKS"
+# resource "aws_iam_policy" "eks_oidc_management" {
+#   name        = "eks-oidc-management"
+#   description = "Permissions to manage OIDC provider for EKS"
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "iam:CreateOpenIDConnectProvider",
-          "iam:DeleteOpenIDConnectProvider",
-          "iam:GetOpenIDConnectProvider",
-          "iam:ListOpenIDConnectProviders",
-          "iam:TagOpenIDConnectProvider",
-          "iam:UpdateOpenIDConnectProviderThumbprint"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect = "Allow",
+#         Action = [
+          # "iam:CreateOpenIDConnectProvider",
+          # "iam:DeleteOpenIDConnectProvider",
+          # "iam:GetOpenIDConnectProvider",
+          # "iam:ListOpenIDConnectProviders",
+          # "iam:TagOpenIDConnectProvider",
+          # "iam:UpdateOpenIDConnectProviderThumbprint"
+#         ],
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
-resource "aws_iam_role_policy_attachment" "oidc_management" {
-  role       = aws_iam_role.bastion_role.name
-  policy_arn = aws_iam_policy.eks_oidc_management.arn
-}
+# resource "aws_iam_role_policy_attachment" "oidc_management" {
+#   role       = aws_iam_role.bastion_role.name
+#   policy_arn = aws_iam_policy.eks_oidc_management.arn
+# }
 
 
 
@@ -345,6 +345,7 @@ resource "aws_instance" "bastion" {
 
         # Install jq for JSON processing
         yum install -y jq
+        yum install -y go
         
         aws eks update-kubeconfig --name eks-cluster --region us-east-1
         EOF
@@ -400,4 +401,28 @@ resource "aws_iam_policy" "secretsmanager_full_access" {
 resource "aws_iam_role_policy_attachment" "secretsmanager_full_access" {
   role       = aws_iam_role.bastion_role.name
   policy_arn = aws_iam_policy.secretsmanager_full_access.arn
+}
+
+
+resource "aws_iam_policy" "route53_full_access" {
+  name        = "route53_full_access"
+  description = "Permissions to manage secret management for EKS"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "route53:*",
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "route53_full_access" {
+  role       = aws_iam_role.bastion_role.name
+  policy_arn = aws_iam_policy.route53_full_access.arn
 }
