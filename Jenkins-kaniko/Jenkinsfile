@@ -92,7 +92,6 @@ pipeline {
                         trivy image \
                         --exit-code 1 \
                         --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL\
-                        // --no-progress \
                         --input /workspace/image.tar
                     """
                 }
