@@ -1,37 +1,38 @@
-# Jenkins + Kaniko + ECR Pipeline Setup
+# 🚀 Jenkins + Kaniko + Trivy CI/CD Pipeline
 
-Access from 
-http://k8s-jenkinsn-jenkins-f2c93cac70-1789595189.us-east-1.elb.amazonaws.com/
+A production-grade Jenkins pipeline that builds Docker images using **Kaniko**, scans them for vulnerabilities with **Trivy**, and pushes them securely to **Amazon ECR** — all within a **Kubernetes Pod** agent.
 
-How to build and push Docker images using **Kaniko** in a **Kubernetes** environment with **Jenkins**, storing images in **Amazon ECR**.
+---
+
+## 📋 Overview
+This CI/CD pipeline enables:
+- Building Docker images without privileged access using **Kaniko**
+- Scanning the image before pushing using **Trivy**
+- Securely pushing trusted images to **AWS ECR**
+- Triggering via GitHub push
+- Slack notifications on pipeline success
+
+---
+
+## ⚙️ Tech Stack
+- Jenkins with Kubernetes plugin
+- Kaniko (Image building)
+- Trivy (Vulnerability scanning)
+- Amazon ECR (Image registry)
+- Slack (Notifications)
+- GitHub (Source control)
 
 ---
 
 ## 🔧 Prerequisites
-- AWS Account with permissions to manage IAM and ECR
-- Kubernetes Cluster with Jenkins installed
+- AWS account with IAM permissions
+- ECR repository
+- Kubernetes cluster with Jenkins installed
 - Jenkins Kubernetes plugin installed
-
 
 ---
 
-## 🔐 Step 1: Create IAM Policy and User
-
-**IAM/create-policy.sh**
-```bash
-aws iam create-policy \
-    --policy-name jenkins-ecr-policy \
-    --policy-document file://jenkins-ecr-policy.json
-```
-
-**IAM/create-user.sh**
-```bash
-aws iam create-user --user-name jenkins-ecr
-aws iam attach-user-policy \
-    --user-name jenkins-ecr \
-    --policy-arn arn:aws:iam::<YOUR_ACCOUNT_ID>:policy/jenkins-ecr-policy
-aws iam create-access-key --user-name jenkins-ecr
-```
+## 🔐 Step 1: IAM Policy and User Setup
 
 **IAM/jenkins-ecr-policy.json**
 ```json
@@ -58,19 +59,28 @@ aws iam create-access-key --user-name jenkins-ecr
 }
 ```
 
+**Create User and Attach Policy**
+```bash
+aws iam create-user --user-name jenkins-ecr
+aws iam create-policy --policy-name jenkins-ecr-policy --policy-document file://jenkins-ecr-policy.json
+aws iam attach-user-policy \
+    --user-name jenkins-ecr \
+    --policy-arn arn:aws:iam::<YOUR_ACCOUNT_ID>:policy/jenkins-ecr-policy
+aws iam create-access-key --user-name jenkins-ecr
+```
+
 ---
 
 ## 🗂️ Step 2: Create ECR Repository
-
 ```bash
 aws ecr create-repository \
-    --repository-name kanikotest \
+    --repository-name node-app-jenkins \
     --region us-east-1
 ```
 
 ---
 
-## 🔐 Step 3: Create AWS Credentials Secret in Kubernetes
+## 🛡️ Step 3: Create AWS Secret in Kubernetes
 
 **k8s/aws-secret.yaml**
 ```yaml
@@ -84,101 +94,53 @@ data:
   AWS_ACCESS_KEY_ID: <base64-encoded-key>
   AWS_SECRET_ACCESS_KEY: <base64-encoded-secret>
 ```
-> Encode using: `echo -n 'YOUR_VALUE' | base64`
+> Encode values: `echo -n 'your_value' | base64`
 
-Apply the secret:
 ```bash
 kubectl apply -f k8s/aws-secret.yaml -n jenkins-ns
 ```
 
 ---
 
-## ⚙️ Jenkins Pipeline Configuration
+## 🛠️ Pipeline Breakdown
 
-**jenkins/Jenkinsfile**
-```groovy
-pipeline {
-  agent {
-    kubernetes {
-      yamlFile 'jenkins/kaniko-pod.yaml'
-    }
-  }
+### 1. Agent Pod with Kaniko & Trivy
+Defined using Kubernetes YAML within the Jenkinsfile. This ensures reproducible, isolated environments with necessary tools:
+- **Kaniko**: For Docker-in-docker alternative builds
+- **Trivy**: For image scanning
+- Volumes mounted for workspace and AWS secrets
 
-  environment {
-    AWS_REGION = 'us-east-1'
-    ECR_REGISTRY = '214--<account-id>.dkr.ecr.us-east-1.amazonaws.com'
-    ECR_REPOSITORY = 'kanikotest'
-  }
+### 2. Stages
 
-  stages {
-    stage('Build & Push to ECR') {
-      steps {
-        container('kaniko') {
-          script {
-            sh '''
-              mkdir -p /kaniko/.docker
-              echo '{
-                "credHelpers": {
-                  "${ECR_REGISTRY}": "ecr-login"
-                }
-              }' > /kaniko/.docker/config.json
+#### ✅ Checkout
+- Pulls latest code from GitHub repository
 
-              /kaniko/executor \
-                --context=git://github.com/hosseldin/CLOUDOPS-PIPELINE.git#refs/heads/main \
-                --context-sub-path=nodeapp \
-                --dockerfile=Dockerfile \
-                --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}
-            '''
-          }
-        }
-      }
-    }
-  }
-}
-```
+#### 🏗️ Build with Kaniko (No Push)
+- Uses `--no-push` & `--tarPath` to generate a local image tarball only
+- Ensures scanning is done before pushing any image to a registry
 
-**jenkins/kaniko-pod.yaml**
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kaniko
-  namespace: jenkins-ns
-spec:
-  containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:debug
-    command:
-    - /busybox/cat
-    tty: true
-    env:
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: aws-credentials
-          key: AWS_ACCESS_KEY_ID
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: aws-credentials
-          key: AWS_SECRET_ACCESS_KEY
-    volumeMounts:
-    - name: aws-config
-      mountPath: /kaniko/.aws
-  volumes:
-  - name: aws-config
-    secret:
-      secretName: aws-credentials
-```
+#### 🔍 Scan with Trivy
+- Scans tarred image with specified severities
+- Uses `--exit-code 0` to avoid pipeline fail but gives insights
+
+#### 📤 Push Verified Image to ECR
+- Only happens after scanning
+- Uses `--tarPath` and `--destination` to safely upload
+
+#### 📣 Slack Notification
+- On pipeline success, sends a formatted Slack message
 
 ---
 
-## ✅ Result
-Once triggered, Jenkins will:
-1. Spin up a Kaniko pod in Kubernetes
-2. Use AWS credentials from a secret
-3. Build the Docker image from a Git repo
-4. Push it to your ECR repository
 
 ---
+
+## ❗ Example Trivy Scan Output
+```
+scanning image.tar...
+cdist3-02002EA91L:
+---------------------
+CRITICAL: 1
+HIGH: 2
+```
 
