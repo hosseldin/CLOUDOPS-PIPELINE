@@ -1,40 +1,40 @@
 pipeline {
     agent {
         kubernetes {
-            yaml '''
+        yaml '''
             apiVersion: v1
             kind: Pod
             metadata:
-                name: kaniko
-                namespace: jenkins-ns
+            name: kaniko
+            namespace: jenkins-ns
             spec:
-                containers:
-                    - name: kaniko
-                    image: gcr.io/kaniko-project/executor:debug
-                    command:
-                        - /busybox/cat
-                    tty: true
-                    env:
-                        - name: TZ
-                        value: "Africa/Cairo"  
-                        - name: AWS_ACCESS_KEY_ID
-                        valueFrom:
-                            secretKeyRef:
-                            name: aws-credentials
-                            key: AWS_ACCESS_KEY_ID
-                        - name: AWS_SECRET_ACCESS_KEY
-                        valueFrom:
-                            secretKeyRef:
-                            name: aws-credentials
-                            key: AWS_SECRET_ACCESS_KEY
-                    volumeMounts:
-                        - name: aws-config
-                        mountPath: /kaniko/.aws
-                volumes:
+            containers:
+                - name: kaniko
+                image: gcr.io/kaniko-project/executor:debug
+                command:
+                    - /busybox/cat
+                tty: true
+                env:
+                    - name: TZ
+                    value: "Africa/Cairo"  
+                    - name: AWS_ACCESS_KEY_ID
+                    valueFrom:
+                        secretKeyRef:
+                        name: aws-credentials
+                        key: AWS_ACCESS_KEY_ID
+                    - name: AWS_SECRET_ACCESS_KEY
+                    valueFrom:
+                        secretKeyRef:
+                        name: aws-credentials
+                        key: AWS_SECRET_ACCESS_KEY
+                volumeMounts:
                     - name: aws-config
-                    secret:
-                        secretName: aws-credentials
-            '''
+                    mountPath: /kaniko/.aws
+            volumes:
+                - name: aws-config
+                secret:
+                    secretName: aws-credentials
+        '''
         }
     }
 
