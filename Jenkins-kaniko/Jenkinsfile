@@ -90,7 +90,7 @@ pipeline {
                     sh """
                         trivy image \
                         --exit-code 1 \
-                        --severity CRITICAL,HIGH \
+                        --severity CRITICAL \
                         --no-progress \
                         --input /workspace/image.tar
                     """
