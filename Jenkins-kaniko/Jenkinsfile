@@ -17,6 +17,8 @@ pipeline {
                   volumeMounts:
                     - name: aws-config
                       mountPath: /kaniko/.aws
+                    - name: workspace
+                      mountPath: /workspace
 
                 - name: trivy
                   image: aquasec/trivy:latest
