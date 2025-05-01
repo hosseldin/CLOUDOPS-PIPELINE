@@ -34,7 +34,6 @@ pipeline {
             - name: aws-config
             secret:
                 secretName: aws-credentials
-
         '''
         }
     }
