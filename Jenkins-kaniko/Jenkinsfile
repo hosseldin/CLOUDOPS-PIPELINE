@@ -23,6 +23,11 @@ pipeline {
                       command:
                           - cat
                       tty: true
+                      volumeMounts:
+                          - name: trivy-cache
+                          mountPath: /root/.cache/trivy
+                          - name: workspace
+                          mountPath: /workspace
 
                       env:
                           - name: TZ
@@ -41,6 +46,10 @@ pipeline {
                     - name: aws-config
                       secret:
                           secretName: aws-credentials
+                    - name: trivy-cache
+                      emptyDir: {}
+                    - name: workspace
+                      emptyDir: {}
             '''
         }
     }
@@ -64,30 +73,75 @@ pipeline {
             }
         }
 
-        // Stage for building and pushing to ECR (only if the folder was changed)
-        stage('Build and Push to ECR') {
+        stage('Build with Kaniko + Prepare Trivy Scan (No Push)') {
             steps {
                 container('kaniko') {
-                    script {                    
-                        // Using Jenkins' BUILD_NUMBER as the image tag
-                        def imageTag = "v${BUILD_NUMBER}"
+                    sh """
+                        /kaniko/executor \
+                        --context=dir://${WORKSPACE}/${TARGET_FOLDER} \
+                        --dockerfile=${WORKSPACE}/${TARGET_FOLDER}/Dockerfile \
+                        --no-push \
+                        --tarPath=/workspace/image.tar
+                    """
+                }
+            }
+        }
 
+        stage('Scan with Trivy') {
+            steps {
+                container('trivy') {
+                    sh """
+                        trivy image \
+                        --exit-code 1 \
+                        --severity CRITICAL,HIGH \
+                        --no-progress \
+                        --input /workspace/image.tar
+                    """
+                }
+            }
+        }
+
+        // Stage 3: Push to ECR only if scan passed
+        stage('Push Verified Image to ECR') {
+            steps {
+                container('kaniko') {
+                    script {
                         sh """
-                            export TZ="Africa/Cairo"
-                            mkdir -p /kaniko/.docker
-                            echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
-
-                            TZ="Africa/Cairo" /kaniko/executor \
-                            --context=git://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git#refs/heads/main \
-                            --context-sub-path=nodeapp \
-                            --dockerfile=Dockerfile \
-                            --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
+                            /kaniko/executor \
+                            --tarPath=/workspace/image.tar \
+                            --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER} \
+                            --cache
                         """
-                        echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
+                        echo "✅ Successfully pushed to ECR!"
                     }
                 }
             }
         }
+
+        // // Stage for building and pushing to ECR (only if the folder was changed)
+        // stage('Build and Push to ECR') {
+        //     steps {
+        //         container('kaniko') {
+        //             script {                    
+        //                 // Using Jenkins' BUILD_NUMBER as the image tag
+        //                 def imageTag = "v${BUILD_NUMBER}"
+
+        //                 sh """
+        //                     export TZ="Africa/Cairo"
+        //                     mkdir -p /kaniko/.docker
+        //                     echo '{"credHelpers": {"${ECR_REGISTRY}": "ecr-login"}}' > /kaniko/.docker/config.json
+
+        //                     /kaniko/executor \
+        //                     --context=git://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git#refs/heads/main \
+        //                     --context-sub-path=nodeapp \
+        //                     --dockerfile=Dockerfile \
+        //                     --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}
+        //                 """
+        //                 echo "✅ Successfully pushed image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${imageTag}"
+        //             }
+        //         }
+        //     }
+        // }
 
         // Stage for notifying Slack
         stage('Notify Slack') {
