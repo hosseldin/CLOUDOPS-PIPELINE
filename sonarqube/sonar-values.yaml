@@ -27,7 +27,7 @@ postgresql:
     enabled: true
     storageClass: "gp2"
     size: 10Gi
-  # Add node selector and tolerations for PostgreSQL too
+  # Add node selector and tolerations for PostgreSQL
   nodeSelector:
     sonarqube: "true"
   tolerations:
