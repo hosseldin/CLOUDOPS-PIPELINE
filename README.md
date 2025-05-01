@@ -233,6 +233,9 @@ pipeline {
 
 
 
+https://argocd-image-updater.readthedocs.io/en/latest/basics/update-methods/
+
+https://medium.com/@CloudifyOps/automating-continuous-delivery-with-argocd-image-updater-bcd4a84ff858
 ------------
 installing argocd --
 ------------
