@@ -1,6 +1,3 @@
-// Load the stage loader utility
-def stageLoader = load 'loadStages.groovy'
-
 pipeline {
     agent {
         kubernetes {
@@ -15,16 +12,37 @@ pipeline {
         TARGET_FOLDER = 'nodeapp'
     }
 
-    triggers {
-        githubPush()
-    }
-
     stages {
-        stage('Initialize') {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build & Scan') {
             steps {
                 script {
-                    // Load all stages
-                    stageLoader.loadStages()
+                    // Load and execute from checked out repository
+                    def buildScan = load "${WORKSPACE}/stages/build-scan.groovy"
+                    buildScan.call()
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                script {
+                    def pushEcr = load "${WORKSPACE}/stages/push-ecr.groovy"
+                    pushEcr.call()
+                }
+            }
+        }
+
+        stage('Notify') {
+            steps {
+                script {
+                    def notify = load "${WORKSPACE}/stages/notify.groovy"
+                    notify.call()
                 }
             }
         }
