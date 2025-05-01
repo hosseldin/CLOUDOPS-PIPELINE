@@ -6,25 +6,37 @@ pipeline {
     }
 
     environment {
-        AWS_REGION = 'us-east-1'
-        ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
-        ECR_REPOSITORY = 'node-app-jenkins'
-        TARGET_FOLDER = 'nodeapp'
+        AWS_REGION      = 'us-east-1'
+        ECR_REGISTRY    = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REPOSITORY  = 'node-app-jenkins'
+        TARGET_FOLDER   = 'nodeapp'
+    }
+
+    triggers {
+        githubPush()
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git url: 'https://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git', branch: 'main'
             }
         }
 
-        stage('Build & Scan') {
+        stage('Build Image') {
             steps {
                 script {
-                    // Load and execute from checked out repository
-                    def buildScan = load "${WORKSPACE}/stages/build-scan.groovy"
-                    buildScan.call()
+                    def build = load "stages/build.groovy"
+                    build()
+                }
+            }
+        }
+
+        stage('Scan Image') {
+            steps {
+                script {
+                    def scan = load "stages/scan.groovy"
+                    scan()
                 }
             }
         }
@@ -32,8 +44,8 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 script {
-                    def pushEcr = load "${WORKSPACE}/stages/push-ecr.groovy"
-                    pushEcr.call()
+                    def push = load "stages/push.groovy"
+                    push()
                 }
             }
         }
@@ -41,8 +53,8 @@ pipeline {
         stage('Notify') {
             steps {
                 script {
-                    def notify = load "${WORKSPACE}/stages/notify.groovy"
-                    notify.call()
+                    def notify = load "stages/notify.groovy"
+                    notify()
                 }
             }
         }
