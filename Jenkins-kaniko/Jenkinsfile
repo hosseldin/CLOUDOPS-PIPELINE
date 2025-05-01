@@ -24,8 +24,6 @@ pipeline {
                           - cat
                       tty: true
                       volumeMounts:
-                          - name: trivy-cache
-                          mountPath: /root/.cache/trivy
                           - name: workspace
                           mountPath: /workspace
 
@@ -46,8 +44,6 @@ pipeline {
                     - name: aws-config
                       secret:
                           secretName: aws-credentials
-                    - name: trivy-cache
-                      emptyDir: {}
                     - name: workspace
                       emptyDir: {}
             '''
