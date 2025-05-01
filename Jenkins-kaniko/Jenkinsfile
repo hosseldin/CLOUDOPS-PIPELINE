@@ -14,18 +14,15 @@ pipeline {
                       command:
                           - /busybox/cat
                       tty: true
+                      volumeMounts:
+                          - name: aws-config
+                            mountPath: /kaniko/.aws
 
                     - name: trivy
                       image: aquasec/trivy:latest
                       command:
                           - cat
                       tty: true
-
-                    - name: crane
-                      image: gcr.io/go-containerregistry/crane:latest
-                    //   command:
-                    //       - cat
-                    //   tty: true
 
                       env:
                           - name: TZ
@@ -40,9 +37,6 @@ pipeline {
                                 secretKeyRef:
                                     name: aws-credentials
                                     key: AWS_SECRET_ACCESS_KEY
-                      volumeMounts:
-                          - name: aws-config
-                            mountPath: /kaniko/.aws
                 volumes:
                     - name: aws-config
                       secret:
