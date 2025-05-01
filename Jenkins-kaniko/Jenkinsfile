@@ -28,6 +28,7 @@ pipeline {
                   volumeMounts:
                     - name: workspace
                       mountPath: /workspace
+
                   env:
                     - name: TZ
                       value: "Africa/Cairo"
@@ -90,8 +91,8 @@ pipeline {
                     sh """
                         trivy image \
                         --exit-code 1 \
-                        // --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL\
-                        --no-progress \
+                        --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL\
+                        // --no-progress \
                         --input /workspace/image.tar
                     """
                 }
