@@ -23,9 +23,9 @@ pipeline {
 
                     - name: crane
                       image: gcr.io/go-containerregistry/crane:latest
-                      command:
-                          - cat
-                      tty: true
+                    //   command:
+                    //       - cat
+                    //   tty: true
 
                       env:
                           - name: TZ
