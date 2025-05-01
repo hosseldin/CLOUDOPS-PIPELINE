@@ -1,188 +1,230 @@
-# External Secrets Operator with AWS Secrets Manager
+# 🌐 CLOUDOPS-PIPELINE
 
-This guide explains how to set up the [External Secrets Operator](https://external-secrets.io) with **AWS Secrets Manager** to automatically sync secrets into your Kubernetes cluster.
+**Official Repository for the Full GitOps Pipeline on AWS using Terraform, EKS, Jenkins, ArgoCD, and Secrets Management**
 
 ---
 
-##  Installation
+## 📋 Table of Contents
 
-**1️⃣ Add the Helm Repository:**
+- [🔧 Prerequisites](#-prerequisites)
+- [☁️ EKS Cluster Setup](#%ef%b8%8f-eks-cluster-setup)
+- [🔗 Connect `kubectl` to EKS Cluster](#-connect-kubectl-to-eks-cluster)
+- [🎠 Install AWS Load Balancer Controller](#-install-aws-load-balancer-controller)
+- [⚙️ Install EBS CSI Driver](#%ef%b8%8f-install-ebs-csi-driver)
+- [⚙️ Install Jenkins (via Helm)](#%ef%b8%8f-install-jenkins-via-helm)
+- [🔑 Jenkins ECR Integration](#-jenkins-ecr-integration)
+- [🚀 Jenkins Pipeline (Kaniko to ECR)](#-jenkins-pipeline-kaniko-to-ecr)
+- [🛥️ Install ArgoCD](#-install-argocd)
+- [⚙️ ArgoCD App Deployment Example](#%ef%b8%8f-argocd-app-deployment-example)
+- [🔄 ArgoCD Image Updater Setup](#-argocd-image-updater-setup)
+- [🔑 Git Credentials for ArgoCD](#-git-credentials-for-argocd)
+
+---
+
+## 🔧 Prerequisites
+
+- AWS CLI configured with appropriate permissions
+- `kubectl` installed and configured
+- `eksctl` installed
+- `helm` installed
+- Terraform installed and configured
+
+---
+
+## ☁️ EKS Cluster Setup
+
+Provision your EKS cluster using Terraform. Ensure that the cluster is up and running before proceeding.
+
+---
+
+## 🔗 Connect `kubectl` to EKS Cluster
 
 ```bash
-helm repo add external-secrets https://charts.external-secrets.io
+aws eks update-kubeconfig --name eks-cluster --region us-east-1
+```
+
+---
+
+## 🎠 Install AWS Load Balancer Controller
+
+1. **Download IAM Policy:**
+
+   ```bash
+   curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.12.0/docs/install/iam_policy.json
+   ```
+
+2. **Create IAM Policy:**
+
+   ```bash
+   aws iam create-policy \
+       --policy-name AWSLoadBalancerControllerIAMPolicy \
+       --policy-document file://iam_policy.json
+   ```
+
+3. **Associate IAM OIDC Provider:**
+
+   ```bash
+   eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=eks-cluster --approve
+   ```
+
+4. **Create IAM Service Account:**
+
+   ```bash
+   eksctl create iamserviceaccount \
+       --cluster=eks-cluster \
+       --namespace=kube-system \
+       --name=aws-load-balancer-controller \
+       --attach-policy-arn=arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+       --override-existing-serviceaccounts \
+       --region us-east-1 \
+       --approve
+   ```
+
+   > **Note:** Replace `<ACCOUNT_ID>` with your AWS account ID.
+
+5. **Install via Helm:**
+
+   ```bash
+   helm repo add eks https://aws.github.io/eks-charts
+   helm repo update
+   helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+     -n kube-system \
+     --set clusterName=eks-cluster \
+     --set serviceAccount.create=false \
+     --set serviceAccount.name=aws-load-balancer-controller
+   ```
+
+6. **Verify Installation:**
+
+   ```bash
+   kubectl get deployment -n kube-system aws-load-balancer-controller
+   ```
+
+---
+
+## ⚙️ Install EBS CSI Driver
+
+```bash
+eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster eks-cluster \
+    --role-name AmazonEKS_EBS_CSI_DriverRole \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --region us-east-1 \
+    --approve
+```
+
+---
+
+## ⚙️ Install Jenkins (via Helm)
+
+1. **Add Helm Repo & Create Namespace:**
+
+   ```bash
+   helm repo add jenkinsci https://charts.jenkins.io
+   helm repo update
+   kubectl create namespace jenkins-ns
+   ```
+
+2. **Prepare Values File:**
+
+   ```bash
+   helm show values jenkinsci/jenkins > /tmp/jenkins.yml
+   ```
+
+3. **Edit `/tmp/jenkins.yml` to set `serviceType: LoadBalancer` and configure ingress.**
+
+4. **Install Jenkins:**
+
+   ```bash
+   helm install jenkins jenkinsci/jenkins --values /tmp/jenkins.yml -n jenkins-ns
+   ```
+
+5. **Get Jenkins Password:**
+
+   ```bash
+   kubectl exec --namespace jenkins-ns -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password
+   ```
+
+6. **Get LoadBalancer IP:**
+
+   ```bash
+   kubectl get svc --namespace jenkins-ns jenkins
+   ```
+
+---
+
+## 🔑 Jenkins ECR Integration
+
+1. **Create IAM Policy & User:**
+
+2. **Create ECR Repository:**
+
+3. **Create Kubernetes Secret:**
+
+---
+
+## 🚀 Jenkins Pipeline (Kaniko to ECR)
+
+Set up your Jenkins pipeline using the `Jenkinsfile` provided in the repository.
+
+---
+
+## 🛥️ Install ArgoCD
+
+```bash
+kubectl create namespace argocd
+helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
-```
-
-**2️⃣ Install the External Secrets Operator:**
-
-```bash
-helm install external-secrets \
-  external-secrets/external-secrets \
-  -n external-secrets \
-  --create-namespace \
-  --set installCRDs=true
-```
-
-**3️⃣ Verify Installation:**
-
-```bash
-kubectl get pods -n external-secrets
+helm install argocd argo/argo-cd --namespace argocd
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+kubectl get svc -n argocd argocd-server
 ```
 
 ---
 
-## 🔐 Connect to AWS Secrets Manager
-
-### 1️⃣ Create an IAM Policy for Secrets Access
-
-🪸 Create a file named `sec.json`:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue",
-        "secretsmanager:DescribeSecret",
-        "secretsmanager:ListSecrets"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-👉 Create the IAM policy:
-
-```bash
-aws iam create-policy \
-  --policy-name SecretsManagerReadPolicy \
-  --policy-document file://sec.json
-```
-
----
-
-### 2️⃣ Create a Kubernetes Secret with AWS Credentials
-
-```bash
-kubectl create secret generic awssm-secret \
-  -n external-secrets \
-  --from-literal=access-key-id=<YOUR_ACCESS_KEY_ID> \
-  --from-literal=secret-access-key=<YOUR_SECRET_ACCESS_KEY>
-```
-
----
-
-### 3️⃣ Create a ClusterSecretStore
-
-🪸 Create a file named `cluster-secret-store.yaml`:
+## ⚙️ ArgoCD App Deployment Example
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ClusterSecretStore
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  name: aws-cluster-secret-store
+  name: argotest-app
+  namespace: argocd
 spec:
-  provider:
-    aws:
-      service: SecretsManager
-      region: <YOUR_AWS_REGION>
-      auth:
-        secretRef:
-          accessKeyIDSecretRef:
-            name: awssm-secret
-            namespace: external-secrets
-            key: access-key-id
-          secretAccessKeySecretRef:
-            name: awssm-secret
-            namespace: external-secrets
-            key: secret-access-key
+  project: default
+  source:
+    repoURL: https://github.com/M-Samii/Argo-repo.git
+    targetRevision: HEAD
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argoapp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 ```
 
-👉 Apply it:
+---
+
+## 🔄 ArgoCD Image Updater Setup
+
+1. **Create Namespace & Secret:**
+
+2. **Install Image Updater:**
+
+3. **Check Logs:**
+
+---
+
+## 🔑 Git Credentials for ArgoCD
 
 ```bash
-kubectl apply -f cluster-secret-store.yaml
+kubectl -n argocd create secret generic git-creds \
+  --from-file=sshPrivateKey=/home/ec2-user/.ssh/id_rsa
 ```
-
----
-
-## 🔄 Sync Secrets Automatically
-
-### 1️⃣ Create a Secret in AWS Secrets Manager
-
-```bash
-aws secretsmanager create-secret \
-  --name myapp/database-credentials \
-  --secret-string '{"username":"root","password":"root"}'
-```
-
----
-
-### 2️⃣ Create an ExternalSecret Resource
-
-🪸 Create a file named `db-external-secret.yaml`:
-
-```yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: database-credentials
-  namespace: argoapp
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: aws-cluster-secret-store
-    kind: ClusterSecretStore
-  target:
-    name: database-secret
-  data:
-    - secretKey: username
-      remoteRef:
-        key: myapp/database-credentials
-        property: username
-    - secretKey: password
-      remoteRef:
-        key: myapp/database-credentials
-        property: password
-```
-
-👉 Apply it:
-
-```bash
-kubectl apply -f db-external-secret.yaml
-```
-
----
-
-## ✅ Verify the Synced Secret
-
-```bash
-kubectl get secrets -n argoapp
-```
-
----
-
-## 🛠 Using the Secrets in Your Application
-
-In your **Deployment** manifest, reference the secret like this:
-
-```yaml
-env:
-  - name: DB_USERNAME
-    valueFrom:
-      secretKeyRef:
-        name: database-secret
-        key: username
-  - name: DB_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: database-secret
-        key: password
-```
-
----
-
 
