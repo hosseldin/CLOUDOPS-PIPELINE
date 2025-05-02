@@ -1,6 +1,6 @@
-# 🌐 CLOUDOPS-PIPELINE
+# 🌐 ITIOPS: CLOUDSUITEx - INFRA
 
-**Official Repository for the Full GitOps Pipeline on AWS using Terraform, EKS, Jenkins, ArgoCD, and Secrets Management**
+**Official repository for ITIOPS Team, CLOUDSUITEx Project: A Full GitOps Pipeline on AWS using Terraform, EKS, Jenkins, ArgoCD, and Secrets Management - INFRA REPO**
 
 ---
 
