@@ -40,7 +40,7 @@
 
 ## 🏗 Architecture Diagram
 
-![Architecture Diagram](itiops-diagram02.png)
+![Architecture Diagram](itiops-diagram02 (1).png)
 
 ---
 
