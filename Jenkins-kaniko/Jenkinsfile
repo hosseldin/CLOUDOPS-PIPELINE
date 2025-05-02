@@ -111,7 +111,7 @@ pipeline {
                 container('trivy') {
                     sh """
                         trivy image \
-                        --exit-code 0 \
+                        --exit-code 1 \
                         --severity HIGH,CRITICAL \
                         --no-progress \
                         --input /workspace/image.tar
