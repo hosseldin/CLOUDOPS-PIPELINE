@@ -148,10 +148,10 @@ pipeline {
                     def gitCommitter = 'Unknown'
                     try {
                         def changeLogSets = currentBuild.changeSets
-                        if (!changeLogSets.isEmpty()) {
+                        if (changeLogSets && changeLogSets.size() > 0) {
                             def entries = changeLogSets[0].items
-                            if (!entries.isEmpty()) {
-                                gitCommitter = entries[0].author.fullName
+                            if (entries && entries.size() > 0) {
+                                gitCommitter = entries[0].author?.fullName ?: entries[0].author?.id ?: 'Unknown'
                             }
                         }
                     } catch (Exception e) {
@@ -160,8 +160,8 @@ pipeline {
                     
                     // Fallback to build cause if git committer not available
                     def startedBy = gitCommitter != 'Unknown' ? gitCommitter : 
-                                currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'
-                    
+                                (currentBuild.getBuildCauses()[0]?.userId ?: 
+                                currentBuild.getBuildCauses()[0]?.userName ?: 'Auto Triggered')
                     slackSend(
                         channel: 'eks-jenkins-notifications',
                         attachments: [
