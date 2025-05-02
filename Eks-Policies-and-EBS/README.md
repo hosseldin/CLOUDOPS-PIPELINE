@@ -1,11 +1,19 @@
-
 # 🐝 EKS Cluster Setup Guide
+Provision your Amazon EKS cluster (via Terraform) and install key add‑ons: the AWS Load Balancer Controller and the EBS CSI Driver. Follow these steps after your Terraform apply has successfully created the cluster and node groups.
 
-Provision your Amazon EKS cluster (via Terraform) and install key add‑ons: the AWS Load Balancer Controller and the EBS CSI Driver. Follow these steps **after** your Terraform apply has successfully created the cluster and node groups.
+## 🛜 1️⃣ SSH into the Bastion Host
+
+Connect to your Bastion (jump) server to access the private EKS cluster:
+
+```bash
+ssh -i <path-to-private-key.pem> ec2-user@<bastion-public-ip>
+```
+
+> Replace `<path-to-private-key.pem>` with your SSH key file and `<bastion-public-ip>` with the public IP address of your Bastion host.
 
 ---
 
-## 🔗 1️⃣ Connect `kubectl` to Your EKS Cluster
+## 🔗 2️⃣ Connect `kubectl` to Your EKS Cluster
 
 Fetch and merge the cluster’s kubeconfig so you can run `kubectl` commands against it:
 
@@ -13,11 +21,11 @@ Fetch and merge the cluster’s kubeconfig so you can run `kubectl` commands aga
 aws eks update-kubeconfig \
   --name eks-cluster \
   --region us-east-1
-````
+```
 
 ---
 
-## ☸️ 2️⃣ Install AWS Load Balancer Controller
+## ☸️ 3️⃣ Install AWS Load Balancer Controller
 
 The **AWS Load Balancer Controller** provisions and manages AWS ALBs/NLBs for your Kubernetes Ingress resources.
 
@@ -82,9 +90,16 @@ kubectl get deployment -n kube-system aws-load-balancer-controller
 
 ---
 
-## 📀 3️⃣ Install EBS CSI Driver
+## 📀 4️⃣ Install EBS CSI Driver
 
 The **EBS CSI Driver** enables dynamic provisioning of EBS volumes for your pods.
+
+> 🛠️ **Prerequisites**:
+>
+> * Make sure the **Amazon EBS CSI Driver Add-on** is installed on your EKS cluster.
+> * Ensure that **EKS Pod Identity Add-on** is enabled if you're using IAM roles for service accounts.
+
+Create the IAM service account:
 
 ```bash
 eksctl create iamserviceaccount \
@@ -109,4 +124,4 @@ eksctl create iamserviceaccount \
 
 Enjoy your production‑ready EKS cluster! 🚀🌐🐝
 
-```
+---
