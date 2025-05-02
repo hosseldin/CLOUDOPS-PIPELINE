@@ -112,7 +112,7 @@ pipeline {
                     sh """
                         trivy image \
                         --exit-code 0 \
-                        --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+                        --severity HIGH,CRITICAL \
                         --no-progress \
                         --input /workspace/image.tar
                     """
@@ -134,57 +134,57 @@ pipeline {
             }
         }
     }
+    post {
+        success {
+            slackSend(
+                channel: 'eks-jenkins-notifications',
+                attachments: [
+                    [
+                        fallback: "Build #${env.BUILD_NUMBER} succeeded",
+                        color: '#36a64f', // Green
+                        title: "✅ Build #${env.BUILD_NUMBER} Success",
+                        text: """
+                            Project: *${env.JOB_NAME}*
+                            Branch: *${env.GIT_BRANCH}*
+                            Status: *SUCCESS* 🎉
+                            Commit: *${env.GIT_COMMIT.take(8)}*""",
+                        fields: [
+                            [ title: "Started by", value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}", short: true ],
+                            [ title: "Duration", value: "${currentBuild.durationString}", short: true ],
+                            [ title: "Logs", value: "<${env.BUILD_URL}console|Open Logs>", short: true ]
+                        ],
+                        image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+                    ]
+                ]
+            )
+        }
+        
+        failure {
+            slackSend(
+                channel: 'eks-jenkins-notifications',
+                attachments: [
+                    [
+                        fallback: "Build #${env.BUILD_NUMBER} failed",
+                        color: '#ff0000', // Red
+                        title: "❌ Build #${env.BUILD_NUMBER} Failed",
+                        text: """
+                            Project: *${env.JOB_NAME}*
+                            Branch: *${env.GIT_BRANCH}*
+                            Status: *FAILED* 💥
+                            Commit: *${env.GIT_COMMIT.take(8)}*""",
+                        fields: [
+                            [ title: "Started by", value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}", short: true ],
+                            [ title: "Duration", value: "${currentBuild.durationString}", short: true ],
+                            [ title: "Logs", value: "<${env.BUILD_URL}console|Debug Failure>", short: true ]
+                        ],
+                        image_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvsAdsKSx1gPjT8fnirKhLQO_vNznIAo-RRg&s'
+                    ]
+                ]
+            )
+        }
+    }
 }
 
-post {
-    success {
-        slackSend(
-            channel: 'eks-jenkins-notifications',
-            attachments: [
-                [
-                    fallback: "Build #${env.BUILD_NUMBER} succeeded",
-                    color: '#36a64f', // Green
-                    title: "✅ Build #${env.BUILD_NUMBER} Success",
-                    text: """
-                        Project: *${env.JOB_NAME}*
-                        Branch: *${env.GIT_BRANCH}*
-                        Status: *SUCCESS* 🎉
-                        Commit: *${env.GIT_COMMIT.take(8)}*""",
-                    fields: [
-                        [ title: "Started by", value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}", short: true ],
-                        [ title: "Duration", value: "${currentBuild.durationString}", short: true ],
-                        [ title: "Logs", value: "<${env.BUILD_URL}console|Open Logs>", short: true ]
-                    ],
-                    image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
-                ]
-            ]
-        )
-    }
-    
-    failure {
-        slackSend(
-            channel: 'eks-jenkins-notifications',
-            attachments: [
-                [
-                    fallback: "Build #${env.BUILD_NUMBER} failed",
-                    color: '#ff0000', // Red
-                    title: "❌ Build #${env.BUILD_NUMBER} Failed",
-                    text: """
-                        Project: *${env.JOB_NAME}*
-                        Branch: *${env.GIT_BRANCH}*
-                        Status: *FAILED* 💥
-                        Commit: *${env.GIT_COMMIT.take(8)}*""",
-                    fields: [
-                        [ title: "Started by", value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}", short: true ],
-                        [ title: "Duration", value: "${currentBuild.durationString}", short: true ],
-                        [ title: "Logs", value: "<${env.BUILD_URL}console|Debug Failure>", short: true ]
-                    ],
-                    image_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvsAdsKSx1gPjT8fnirKhLQO_vNznIAo-RRg&s'
-                ]
-            ]
-        )
-    }
-}
 
     //     stage('Slack Notification') {
     //         steps {
