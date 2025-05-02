@@ -1,56 +1,94 @@
 pipeline {
+    // agent {
+    //     kubernetes {
+    //         yaml '''
+    //         apiVersion: v1
+    //         kind: Pod
+    //         metadata:
+    //             name: kaniko
+    //             namespace: jenkins-ns
+    //         spec:
+    //             containers:
+    //             - name: kaniko
+    //               image: gcr.io/kaniko-project/executor:debug
+    //               command:
+    //                 - /busybox/cat
+    //               tty: true
+    //               volumeMounts:
+    //                 - name: aws-config
+    //                   mountPath: /kaniko/.aws
+    //                 - name: workspace
+    //                   mountPath: /workspace
+
+    //             - name: trivy
+    //               image: aquasec/trivy:latest
+    //               command:
+    //                 - cat
+    //               tty: true
+    //               volumeMounts:
+    //                 - name: workspace
+    //                   mountPath: /workspace
+
+    //               env:
+    //                 - name: TZ
+    //                   value: "Africa/Cairo"
+    //                 - name: AWS_ACCESS_KEY_ID
+    //                   valueFrom:
+    //                     secretKeyRef:
+    //                       name: aws-credentials
+    //                       key: AWS_ACCESS_KEY_ID
+    //                 - name: AWS_SECRET_ACCESS_KEY
+    //                   valueFrom:
+    //                     secretKeyRef:
+    //                       name: aws-credentials
+    //                       key: AWS_SECRET_ACCESS_KEY
+    //             volumes:
+    //             - name: aws-config
+    //               secret:
+    //                 secretName: aws-credentials
+    //             - name: workspace
+    //               emptyDir: {}
+    //         '''
+    //     }
+    // }
+
+
     agent {
-        kubernetes {
-            yaml '''
-            apiVersion: v1
-            kind: Pod
-            metadata:
-                name: kaniko
-                namespace: jenkins-ns
-            spec:
-                containers:
-                - name: kaniko
-                  image: gcr.io/kaniko-project/executor:debug
-                  command:
-                    - /busybox/cat
-                  tty: true
-                  volumeMounts:
-                    - name: aws-config
-                      mountPath: /kaniko/.aws
-                    - name: workspace
-                      mountPath: /workspace
-
-                - name: trivy
-                  image: aquasec/trivy:latest
-                  command:
-                    - cat
-                  tty: true
-                  volumeMounts:
-                    - name: workspace
-                      mountPath: /workspace
-
-                  env:
-                    - name: TZ
-                      value: "Africa/Cairo"
-                    - name: AWS_ACCESS_KEY_ID
-                      valueFrom:
-                        secretKeyRef:
-                          name: aws-credentials
-                          key: AWS_ACCESS_KEY_ID
-                    - name: AWS_SECRET_ACCESS_KEY
-                      valueFrom:
-                        secretKeyRef:
-                          name: aws-credentials
-                          key: AWS_SECRET_ACCESS_KEY
-                volumes:
-                - name: aws-config
-                  secret:
-                    secretName: aws-credentials
+    kubernetes {
+        yaml '''
+        apiVersion: v1
+        kind: Pod
+        metadata:
+            name: kaniko
+            namespace: jenkins-ns
+        spec:
+            serviceAccountName: kaniko-sa
+            containers:
+            - name: kaniko
+              image: gcr.io/kaniko-project/executor:debug
+              command:
+                - /busybox/cat
+              tty: true
+              volumeMounts:
                 - name: workspace
-                  emptyDir: {}
-            '''
-        }
+                  mountPath: /workspace
+            - name: trivy
+              image: aquasec/trivy:latest
+              command:
+                - cat
+              tty: true
+              volumeMounts:
+                - name: workspace
+                  mountPath: /workspace
+              env:
+                - name: TZ
+                  value: "Africa/Cairo"
+            volumes:
+              - name: workspace
+                emptyDir: {}
+        '''
     }
+}
 
     environment {
         AWS_REGION = 'us-east-1'

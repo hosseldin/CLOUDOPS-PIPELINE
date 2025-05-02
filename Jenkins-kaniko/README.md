@@ -268,3 +268,39 @@ This Jenkins pipeline automates these steps:
 
 
 
+
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+
+
+aws iam create-policy \
+  --policy-name ECRPushPolicy \
+  --policy-document file://ecr-push-policy.json
+
+
+eksctl create iamserviceaccount \
+  --name kaniko-sa \
+  --namespace jenkins-ns \
+  --cluster eks-cluster \
+  --attach-policy-arn arn:aws:iam::773893527461:policy/ECRPushPolicy \
+  --approve \
+  --override-existing-serviceaccounts
+
+
+
