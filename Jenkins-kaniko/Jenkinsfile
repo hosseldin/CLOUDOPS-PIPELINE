@@ -133,37 +133,102 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Slack Notification') {
             steps {
                 script {
+                    // Determine build status and set appropriate color/image
+                    def status = currentBuild.currentResult ?: 'SUCCESS'
+                    def color = (status == 'SUCCESS') ? '#36a64f' : '#ff0000'
+                    def imageUrl = (status == 'SUCCESS') ? 
+                        'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg' : 
+                        'https://example.com/path/to/failure/image.jpg' // Replace with your failure image
+                    
+                    // Try to get GitHub committer (works for GitHub webhook triggers)
+                    def gitCommitter = 'Unknown'
+                    try {
+                        def changeLogSets = currentBuild.changeSets
+                        if (!changeLogSets.isEmpty()) {
+                            def entries = changeLogSets[0].items
+                            if (!entries.isEmpty()) {
+                                gitCommitter = entries[0].author.fullName
+                            }
+                        }
+                    } catch (Exception e) {
+                        echo "Could not determine git committer: ${e.message}"
+                    }
+                    
+                    // Fallback to build cause if git committer not available
+                    def startedBy = gitCommitter != 'Unknown' ? gitCommitter : 
+                                currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'
+                    
                     slackSend(
                         channel: 'eks-jenkins-notifications',
                         attachments: [
                             [
-                                fallback: "Build #${env.BUILD_NUMBER} finished",
-                                color: '#36a64f',
-                                title: "Build #${env.BUILD_NUMBER} Complete",
-                                text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
+                                fallback: "Build #${env.BUILD_NUMBER} finished with status ${status}",
+                                color: color,
+                                title: "Build #${env.BUILD_NUMBER} ${status == 'SUCCESS' ? 'Success' : 'Failed'}",
+                                text: """Project: *${env.JOB_NAME}*
+                                    Branch: *${env.GIT_BRANCH}*
+                                    Status: *${status}*
+                                    Commit: *${env.GIT_COMMIT?.take(8) ?: 'N/A'}*""",
                                 fields: [
                                     [
                                         title: "Started by",
-                                        value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}",
+                                        value: startedBy,
                                         short: true
                                     ],
                                     [
                                         title: "Duration",
                                         value: "${currentBuild.durationString}",
                                         short: true
+                                    ],
+                                    [
+                                        title: "Console",
+                                        value: "<${env.BUILD_URL}console|View Logs>",
+                                        short: true
                                     ]
                                 ],
-                                image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+                                image_url: imageUrl,
+                                footer: "Jenkins Build Notification",
+                                ts: System.currentTimeMillis() / 1000
                             ]
                         ]
                     )
                 }
             }
         }
+        // stage('Slack Notification') {
+        //     steps {
+        //         script {
+        //             slackSend(
+        //                 channel: 'eks-jenkins-notifications',
+        //                 attachments: [
+        //                     [
+        //                         fallback: "Build #${env.BUILD_NUMBER} finished",
+        //                         color: '#36a64f',
+        //                         title: "Build #${env.BUILD_NUMBER} Complete",
+        //                         text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
+        //                         fields: [
+        //                             [
+        //                                 title: "Started by",
+        //                                 value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}",
+        //                                 short: true
+        //                             ],
+        //                             [
+        //                                 title: "Duration",
+        //                                 value: "${currentBuild.durationString}",
+        //                                 short: true
+        //                             ]
+        //                         ],
+        //                         image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+        //                     ]
+        //                 ]
+        //             )
+        //         }
+        //     }
+        // }
     }
 }
 
