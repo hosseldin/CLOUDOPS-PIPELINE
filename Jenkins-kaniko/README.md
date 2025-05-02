@@ -1,39 +1,51 @@
-# 🚀 Jenkins + Kaniko + Trivy CI/CD Pipeline
+# 🚀 Jenkins + Kaniko + Trivy + SonarQube CI/CD Pipeline
 
-A production-grade Jenkins pipeline that builds Docker images using **Kaniko**, scans them for vulnerabilities with **Trivy**, and pushes them securely to **Amazon ECR** — all within a **Kubernetes Pod** agent.
+A production-grade Jenkins pipeline that builds Docker images using **Kaniko**, scans them for vulnerabilities with **Trivy**, runs **SonarQube** static code analysis, and pushes them securely to **Amazon ECR** — all within a **Kubernetes Pod** agent.
 
+---
 
 ## 📋 Overview
+
 This CI/CD pipeline enables:
-- Building Docker images without privileged access using **Kaniko**
-- Scanning the image before pushing using **Trivy**
-- Securely pushing trusted images to **AWS ECR**
-- Triggering via GitHub push
-- Slack notifications on pipeline success
+
+* Building Docker images without privileged access using **Kaniko**
+* Scanning the image before pushing using **Trivy**
+* Performing static code analysis using **SonarQube**
+* Securely pushing trusted images to **AWS ECR**
+* Triggering via GitHub push
+* Slack notifications on pipeline success
 
 ---
 
 ## ⚙️ Tech Stack
-- Jenkins with Kubernetes plugin
-- Kaniko (Image building)
-- Trivy (Vulnerability scanning)
-- Amazon ECR (Image registry)
-- Slack (Notifications)
-- GitHub (Source control)
+
+* Jenkins with Kubernetes plugin
+* Kaniko (Image building)
+* Trivy (Vulnerability scanning)
+* SonarQube (Static code analysis)
+* Amazon ECR (Image registry)
+* Slack (Notifications)
+* GitHub (Source control)
 
 ---
 
 ## 🔧 Prerequisites
-- AWS account with IAM permissions
-- ECR repository
-- Kubernetes cluster with Jenkins installed
-- Jenkins Kubernetes plugin installed
+
+* AWS account with IAM permissions
+* ECR repository
+* Kubernetes cluster with Jenkins installed
+* Jenkins Kubernetes plugin installed
+* SonarQube instance (can be cloud or self-hosted)
+* GitHub repository to trigger pipeline
 
 ---
 
-## 🔐 Step 1: IAM Policy and User Setup
+## 🔐 Step 1: Create IAM Policy and Kubernetes Service Account
 
-**IAM/jenkins-ecr-policy.json**
+We need to create an IAM policy and bind it to a Kubernetes service account that Jenkins will use when building and pushing images.
+
+### IAM Policy (`jenkins-ecr-policy.json`)
+
 ```json
 {
   "Version": "2012-10-17",
@@ -43,10 +55,6 @@ This CI/CD pipeline enables:
       "Action": [
         "ecr:GetAuthorizationToken",
         "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:GetRepositoryPolicy",
-        "ecr:DescribeRepositories",
-        "ecr:ListImages",
         "ecr:PutImage",
         "ecr:InitiateLayerUpload",
         "ecr:UploadLayerPart",
@@ -58,241 +66,12 @@ This CI/CD pipeline enables:
 }
 ```
 
-**Create User and Attach Policy**
-```bash
-aws iam create-user --user-name jenkins-ecr
-aws iam create-policy --policy-name jenkins-ecr-policy --policy-document file://jenkins-ecr-policy.json
-aws iam attach-user-policy \
-    --user-name jenkins-ecr \
-    --policy-arn arn:aws:iam::<YOUR_ACCOUNT_ID>:policy/jenkins-ecr-policy
-aws iam create-access-key --user-name jenkins-ecr
-```
-
----
-
-## 🗂️ Step 2: Create ECR Repository
-```bash
-aws ecr create-repository \
-    --repository-name node-app-jenkins \
-    --region us-east-1
-```
-
----
-
-## 🛡️ Step 3: Create AWS Secret in Kubernetes
-
-**k8s/aws-secret.yaml**
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aws-credentials
-  namespace: jenkins-ns
-type: Opaque
-data:
-  AWS_ACCESS_KEY_ID: <base64-encoded-key>
-  AWS_SECRET_ACCESS_KEY: <base64-encoded-secret>
-```
-> Encode values: `echo -n 'your_value' | base64`
+### Create the Policy and Service Account
 
 ```bash
-kubectl apply -f k8s/aws-secret.yaml -n jenkins-ns
-```
----
-
-### 🚀 Deploying Jenkins with Helm
-
-#### 1. **Prepare Values File**
-
-Generate the default values file:
-
-```bash
-helm show values jenkinsci/jenkins > /tmp/jenkins.yml
-```
-
-Edit `/tmp/jenkins.yml`:
-
-* Set `controller.serviceType` to `LoadBalancer`.
-* Configure the `controller.ingress` section if you plan to use Ingress.
-
-#### 2. **Install Jenkins**
-
-```bash
-helm install jenkins jenkinsci/jenkins --values /tmp/jenkins.yml -n jenkins-ns
-```
-
-> Make sure the `jenkins-ns` namespace exists, or create it using:
->
-> ```bash
-> kubectl create namespace jenkins-ns
-> ```
-
-#### 3. **Get Jenkins Admin Password**
-
-```bash
-kubectl exec --namespace jenkins-ns -it svc/jenkins -c jenkins -- \
-  cat /run/secrets/additional/chart-admin-password
-```
-
-#### 4. **Get LoadBalancer IP**
-
-```bash
-kubectl get svc --namespace jenkins-ns jenkins
-```
-
-## 🛠️ Pipeline Breakdown
-
-### 1. Agent Pod with Kaniko & Trivy
-Defined using Kubernetes YAML within the Jenkinsfile. This ensures reproducible, isolated environments with necessary tools:
-- **Kaniko**: For Docker-in-docker alternative builds
-- **Trivy**: For image scanning
-- Volumes mounted for workspace and AWS secrets
-
-### 2. Stages
-
-#### ✅ Checkout
-- Pulls latest code from GitHub repository
-
-#### 🏗️ Build with Kaniko (No Push)
-- Uses `--no-push` & `--tarPath` to generate a local image tarball only
-- Ensures scanning is done before pushing any image to a registry
-
-#### 🔍 Scan with Trivy
-- Scans tarred image with specified severities
-- Uses `--exit-code 0` to avoid pipeline fail but gives insights
-
-#### 📤 Push Verified Image to ECR
-- Only happens after scanning
-- Uses `--tarPath` and `--destination` to safely upload
-
-#### 📣 Slack Notification
-- On pipeline success, sends a formatted Slack message
-
----
-
-
-## ❗ Example Trivy Scan Output
-```
-scanning image.tar...
-cdist3-02002EA91L:
----------------------
-CRITICAL: 1
-HIGH: 2
-```
-
-
-## 🧠 **Pipeline Summary in Plain English**
-
-This Jenkins pipeline automates these steps:
-
-1. **Checks the code from GitHub**.
-2. **Builds a Docker image** *without pushing it* using **Kaniko**.
-3. **Scans the image for security issues** using **Trivy**.
-4. If the scan is okay, it **pushes the image to AWS ECR**.
-5. Finally, it **sends a Slack notification**.
-
----
-
-## 🧱 **Pipeline Explained Step by Step**
-
-### 🧾 `agent { kubernetes { yaml '''...''' } }`
-- This tells Jenkins to run the pipeline in a **Kubernetes pod**.
-- The pod contains:
-  - A **Kaniko container** to build Docker images.
-  - A **Trivy container** to scan images for vulnerabilities.
-- It mounts:
-  - AWS credentials.
-  - A shared workspace for both tools.
-
----
-
-### 🌍 `environment { ... }`
-- Defines global variables:
-  - `AWS_REGION` – The AWS region (e.g., `us-east-1`)
-  - `ECR_REGISTRY` – Your Amazon ECR registry URL.
-  - `ECR_REPOSITORY` – The image repository name in ECR.
-  - `TARGET_FOLDER` – The folder that has the Dockerfile and app code (`nodeapp`).
-
----
-
-### 🔔 `triggers { githubPush() }`
-- This triggers the pipeline automatically when you **push code to GitHub**.
-
----
-
-### 🧩 `stage('Checkout')`
-- Clones your GitHub repo into Jenkins workspace.
-
----
-
-### 🧪 `stage('Build with Kaniko + Prepare Trivy Scan (No Push)')`
-- Kaniko builds the Docker image from the Dockerfile.
-- But **does NOT push** it yet.
-- Instead, it saves the image locally as a `.tar` file so Trivy can scan it first.
-
----
-
-### 🔍 `stage('Scan with Trivy')`
-- Trivy scans the image `.tar` file for **vulnerabilities** (LOW to CRITICAL).
-- If vulnerabilities are found, the build still passes (`--exit-code 0`), but you’ll see the issues.
-
-> ✅ Tip: You can make it fail on vulnerabilities by changing `--exit-code 0` to `--exit-code 1`.
-
----
-
-### 🚀 `stage('Push Verified Image to ECR')`
-- If scan is successful, Kaniko pushes the verified image to your **Amazon ECR**.
-- Uses Jenkins `BUILD_NUMBER` to tag the image (like `v12`, `v13`, etc.).
-
----
-
-### 📣 `stage('Notify Slack')`
-- Sends a nicely formatted Slack message to your channel `eks-jenkins-notifications`.
-- Includes:
-  - Build number
-  - Job name
-  - Status (success)
-  - Duration
-  - Who triggered the build
-  - Commit ID
-  - An image!
-
----
-
-## ✅ Why This Pipeline is Good
-
-- **Secure**: No need for Docker daemon or privileged access.
-- **Automated**: Builds, scans, and deploys on every GitHub push.
-- **Scalable**: Runs inside Kubernetes.
-- **Transparent**: Notifies your team on Slack.
-
-
-
-
-
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:PutImage",
-        "ecr:InitiateLayerUpload",
-        "ecr:UploadLayerPart",
-        "ecr:CompleteLayerUpload"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-
-
 aws iam create-policy \
   --policy-name ECRPushPolicy \
-  --policy-document file://ecr-push-policy.json
-
+  --policy-document file://jenkins-ecr-policy.json
 
 eksctl create iamserviceaccount \
   --name kaniko-sa \
@@ -301,6 +80,187 @@ eksctl create iamserviceaccount \
   --attach-policy-arn arn:aws:iam::773893527461:policy/ECRPushPolicy \
   --approve \
   --override-existing-serviceaccounts
+```
 
+---
+
+## 🚀 Deploying Jenkins with Helm
+
+### 1. Install Jenkins
+
+```bash
+helm install jenkins jenkinsci/jenkins -n jenkins-ns
+```
+
+> Make sure the `jenkins-ns` namespace exists:
+>
+> ```bash
+> kubectl create namespace jenkins-ns
+> ```
+
+### 2. Get Jenkins Admin Password
+
+```bash
+kubectl exec --namespace jenkins-ns -it svc/jenkins -c jenkins -- \
+  cat /run/secrets/additional/chart-admin-password
+```
+
+### 3. Expose Jenkins
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jenkins-ingress
+  namespace: jenkins-ns
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/group.name: itiproject-alb
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/healthcheck-port: "8080"
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
+spec:
+  ingressClassName: alb
+  tls:
+    - hosts:
+        - jenkins.itiproject.site
+  rules:
+    - host: jenkins.itiproject.site
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jenkins
+                port:
+                  number: 8080
+```
+
+---
+
+## 🛠️ Pipeline Breakdown
+
+This CI/CD pipeline consists of the following steps:
+
+1. **Checkout Code**
+   Clones the GitHub repository.
+
+2. **Static Code Analysis with SonarQube**
+   Runs static analysis on the Docker image using SonarQube.
+
+3. **Build with Kaniko (No Push)**
+   Builds the Docker image without pushing it yet, using Kaniko.
+
+4. **Scan with Trivy**
+   Scans the built image for security vulnerabilities.
+
+5. **Push Verified Image to ECR**
+   If the image passes the vulnerability scan and static analysis, it is pushed to AWS ECR.
+
+6. **Notify via Slack**
+   Sends a notification to Slack with the status of the pipeline.
+
+---
+
+## ❗ Example Trivy Scan Output
+
+```
+scanning image.tar...
+cdist3-02002EA91L:
+---------------------
+CRITICAL: 1
+HIGH: 2
+```
+
+---
+
+## 🧠 Pipeline Summary in Plain English
+
+1. **Pulls the latest code** from GitHub
+2. **Runs static code analysis** using **SonarQube**
+3. **Builds a Docker image** using **Kaniko** (no push yet)
+4. **Scans the image** using **Trivy**
+5. **Pushes to AWS ECR** only if the image is safe
+6. **Notifies your team** via Slack
+
+---
+
+## 🧱 Pipeline Step Details
+
+### 🧾 `agent { kubernetes { yaml '''...''' } }`
+
+Runs the pipeline in a Kubernetes Pod with:
+
+* **Kaniko container** for building
+* **Trivy container** for scanning
+* **SonarQube container** for static analysis
+* Mounted volumes for AWS access and workspace
+
+---
+
+### 🌍 `environment { ... }`
+
+Global variables:
+
+* `AWS_REGION`
+* `ECR_REGISTRY`
+* `ECR_REPOSITORY`
+* `TARGET_FOLDER`
+
+---
+
+### 🔔 `triggers { githubPush() }`
+
+Starts the pipeline on every GitHub push.
+
+---
+
+### 🧩 `stage('Checkout')`
+
+Clones the repo.
+
+---
+
+### 🧪 `stage('Static Code Analysis with SonarQube')`
+
+Runs static code analysis on the code to detect bugs, vulnerabilities, and code smells.
+
+---
+
+### 🧪 `stage('Build with Kaniko + Prepare Trivy Scan (No Push)')`
+
+Builds the image as `.tar` without pushing it to ECR.
+
+---
+
+### 🔍 `stage('Scan with Trivy')`
+
+Scans the tarball and reports vulnerabilities.
+
+---
+
+### 🚀 `stage('Push Verified Image to ECR')`
+
+Pushes the image to ECR if the image is clean and secure.
+
+---
+
+### 📣 `stage('Notify Slack')`
+
+Sends the pipeline status and metadata to Slack.
+
+---
+
+## ✅ Why Use This Pipeline?
+
+* 🔐 **Secure**: No Docker-in-Docker or root access
+* 🤖 **Automated**: CI/CD from push to deployment
+* ☁️ **Cloud-Native**: Runs fully inside Kubernetes
+* 📣 **Collaborative**: Informs your team with Slack alerts
+* 🔍 **Quality Assurance**: Static code analysis with **SonarQube** to identify issues early
+* 🛡️ **Security Focused**: Image vulnerability scanning with **Trivy**
 
 
