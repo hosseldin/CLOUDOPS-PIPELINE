@@ -135,7 +135,7 @@ pipeline {
         }
         
 
-        stage('Slack Notification') {
+        stge('Slack Notification') {
             steps {
                 script {
                     // Determine build status and set appropriate color and image
