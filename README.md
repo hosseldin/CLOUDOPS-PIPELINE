@@ -1,10 +1,10 @@
 # 🌐 ITIOPS: CLOUDSUITEx - INFRA
 
-**Official repository for ITIOPS Team, CLOUDSUITEx Project: A Full GitOps Pipeline on AWS using Terraform, EKS, Jenkins, ArgoCD, and Secrets Management - INFRA REPO**
+**Official repository for ITIOPS Team, CLOUDSUITEx Project: A Full GitOps Pipeline on AWS using Terraform, EKS, Jenkins, ArgoCD, and Secrets Management - INFRA Repo**
 
 ---
 
-![image](infraops-diagram01.png)
+![image](itiops-diagram02.png)
 
 ## ✨ Contributors
 
@@ -50,26 +50,28 @@ This project would not have been possible without the valuable contributions of 
 
 - [🔧 Prerequisites](#-prerequisites)
 - [☁️ EKS Cluster Setup](#%ef%b8%8f-eks-cluster-setup)
-- [🔗 Connect `kubectl` to EKS Cluster](#-connect-kubectl-to-eks-cluster)
-- [🎠 Install AWS Load Balancer Controller](#-install-aws-load-balancer-controller)
-- [⚙️ Install EBS CSI Driver](#%ef%b8%8f-install-ebs-csi-driver)
-- [⚙️ Install Jenkins (via Helm)](#%ef%b8%8f-install-jenkins-via-helm)
-- [🔑 Jenkins ECR Integration](#-jenkins-ecr-integration)
-- [🚀 Jenkins Pipeline (Kaniko to ECR)](#-jenkins-pipeline-kaniko-to-ecr)
-- [🛥️ Install ArgoCD](#-install-argocd)
-- [⚙️ ArgoCD App Deployment Example](#%ef%b8%8f-argocd-app-deployment-example)
-- [🔄 ArgoCD Image Updater Setup](#-argocd-image-updater-setup)
-- [🔑 Git Credentials for ArgoCD](#-git-credentials-for-argocd)
+  - [🔗 Connect `kubectl` to EKS Cluster](#-connect-kubectl-to-eks-cluster)
+  - [🎠 Install AWS Load Balancer Controller](#-install-aws-load-balancer-controller)
+  - [⚙️ Install EBS CSI Driver](#%ef%b8%8f-install-ebs-csi-driver)
+- [⚙️ Jenkins Setup](#%ef%b8%8f-install-jenkins-via-helm)
+  - [⚙️ Install Jenkins (via Helm)](#%ef%b8%8f-install-jenkins-via-helm)
+  - [🔑 Jenkins ECR Integration](#-jenkins-ecr-integration)
+  - [🚀 Jenkins Pipeline (Kaniko to ECR)](#-jenkins-pipeline-kaniko-to-ecr)
+- [🛥️ ArgoCD Setup](#-install-argocd)
+  - [⚙️ ArgoCD App Deployment Example](#%ef%b8%8f-argocd-app-deployment-example)
+  - [🔄 ArgoCD Image Updater Setup](#-argocd-image-updater-setup)
+  - [🔑 Git Credentials for ArgoCD](#-git-credentials-for-argocd)
+
 
 ---
 
 ## 🔧 Prerequisites
 
-- AWS CLI configured with appropriate permissions
+- `aws cli` configured with appropriate permissions
+- `terraform` installed on host machine to deploy infrastructure
 - `kubectl` installed and configured
 - `eksctl` installed
 - `helm` installed
-- Terraform installed and configured
 
 ---
 
@@ -77,17 +79,17 @@ This project would not have been possible without the valuable contributions of 
 
 Provision your EKS cluster using Terraform. Ensure that the cluster is up and running before proceeding.
 
----
 
-## 🔗 Connect `kubectl` to EKS Cluster
+
+### 🔹 Connect `kubectl` to EKS Cluster
 
 ```bash
 aws eks update-kubeconfig --name eks-cluster --region us-east-1
 ```
 
----
 
-## 🎠 Install AWS Load Balancer Controller
+
+### 🔹 Install AWS Load Balancer Controller
 
 1. **Download IAM Policy:**
 
@@ -142,9 +144,10 @@ aws eks update-kubeconfig --name eks-cluster --region us-east-1
    kubectl get deployment -n kube-system aws-load-balancer-controller
    ```
 
----
 
-## ⚙️ Install EBS CSI Driver
+
+
+### 🔹 Install EBS CSI Driver
 
 ```bash
 eksctl create iamserviceaccount \
