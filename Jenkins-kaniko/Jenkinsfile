@@ -2,39 +2,45 @@ pipeline {
     agent {
         kubernetes {
             yaml '''
-apiVersion: v1
-kind: Pod
-metadata:
-  name: cicd-pod
-  namespace: jenkins-ns
-spec:
-  serviceAccountName: kaniko-sa
-  containers:
-    - name: kaniko
-      image: gcr.io/kaniko-project/executor:debug
-      command: ["/busybox/cat"]
-      tty: true
-      volumeMounts:
-        - name: workspace
-          mountPath: /workspace
-    - name: trivy
-      image: aquasec/trivy:latest
-      command: ["cat"]
-      tty: true
-      volumeMounts:
-        - name: workspace
-          mountPath: /workspace
-    - name: sonar-scanner
-      image: sonarsource/sonar-scanner-cli:latest
-      command: ["cat"]
-      tty: true
-      volumeMounts:
-        - name: workspace
-          mountPath: /workspace
-  volumes:
-    - name: workspace
-      emptyDir: {}
-'''
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: kaniko-sonar-trivy
+              namespace: jenkins-ns
+            spec:
+              serviceAccountName: kaniko-sa
+              containers:
+                - name: kaniko
+                  image: gcr.io/kaniko-project/executor:debug
+                  command:
+                    - /busybox/cat
+                  tty: true
+                  volumeMounts:
+                    - name: workspace
+                      mountPath: /workspace
+                - name: trivy
+                  image: aquasec/trivy:latest
+                  command:
+                    - cat
+                  tty: true
+                  volumeMounts:
+                    - name: workspace
+                      mountPath: /workspace
+                  env:
+                    - name: TZ
+                      value: "Africa/Cairo"
+                - name: sonar-scanner
+                  image: sonarsource/sonar-scanner-cli:latest
+                  command:
+                    - cat
+                  tty: true
+                  volumeMounts:
+                    - name: workspace
+                      mountPath: /workspace
+              volumes:
+                - name: workspace
+                  emptyDir: {}
+            '''
         }
     }
 
@@ -50,21 +56,17 @@ spec:
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git', branch: 'main'
             }
         }
 
-        stage('SonarQube Analysis') {
-            environment {
-                SONAR_SCANNER_OPTS = "-server"
-            }
+        stage('SonarQube Code Analysis') {
             steps {
                 container('sonar-scanner') {
-                    withSonarQubeEnv('MySonarQubeServer') {
-                        withCredentials([string(credentialsId: 'SONAR_AUTH_TOKEN', variable: 'SONAR_AUTH_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'SONAR_AUTH_TOKEN', variable: 'SONAR_AUTH_TOKEN')]) {
+                        withSonarQubeEnv('MySonarQubeServer') {
                             sh """
                                 sonar-scanner \
                                 -Dsonar.projectKey=node-app-jenkins \
@@ -84,7 +86,7 @@ spec:
                     sh """
                         /kaniko/executor \
                         --context=dir://${WORKSPACE}/${TARGET_FOLDER} \
-                        --dockerfile=${WORKSPACE}/${TARGET_FOLDER}/Dockerfile \
+                        --dockerfile=Dockerfile \
                         --no-push \
                         --tarPath=/workspace/image.tar
                     """
@@ -113,7 +115,7 @@ spec:
                         /kaniko/executor \
                         --tarPath=/workspace/image.tar \
                         --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER} \
-                        --dockerfile=${WORKSPACE}/${TARGET_FOLDER}/Dockerfile \
+                        --dockerfile=Dockerfile \
                         --cache
                     """
                 }
@@ -127,32 +129,7 @@ spec:
                         channel: 'eks-jenkins-notifications',
                         attachments: [
                             [
-                                fallback: "Build #${env.BUILD_NUMBER} finished",
-                                color: '#36a64f',
-                                title: "Build #${env.BUILD_NUMBER} Complete",
-                                text: "Project: *${env.JOB_NAME}*\nBranch: *${env.GIT_BRANCH}*\nStatus: *SUCCESS*\nCommit: *${env.GIT_COMMIT}*",
-                                fields: [
-                                    [
-                                        title: "Started by",
-                                        value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}",
-                                        short: true
-                                    ],
-                                    [
-                                        title: "Duration",
-                                        value: "${currentBuild.durationString}",
-                                        short: true
-                                    ]
-                                ],
-                                image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
-                            ]
-                        ]
-                    )
-                }
-            }
-        }
-    }
-}
-
+                                fallback
 
 
 // pipeline {
