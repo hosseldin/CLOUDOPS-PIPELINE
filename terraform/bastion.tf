@@ -345,7 +345,6 @@ resource "aws_instance" "bastion" {
 
         # Install jq for JSON processing
         yum install -y jq
-        yum install -y go
         
         aws eks update-kubeconfig --name eks-cluster --region us-east-1
         EOF
