@@ -111,7 +111,7 @@ pipeline {
                 container('trivy') {
                     sh """
                         trivy image \
-                        --exit-code 0 \
+                        --exit-code 1 \
                         --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
                         --no-progress \
                         --input /workspace/image.tar
@@ -135,7 +135,7 @@ pipeline {
         }
         
 
-        stge('Slack Notification') {
+        stage('Slack Notification') {
             steps {
                 script {
                     // Determine build status and set appropriate color and image
