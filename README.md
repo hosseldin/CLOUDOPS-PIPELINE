@@ -1,14 +1,206 @@
-# 🌐 ITIOPS: CLOUDSUITEx - INFRA
+# ITIOPS: CLOUDSUITEx - INFRA DevOps Capstone
 
-**Official repository for ITIOPS Team, CLOUDSUITEx Project: A Full GitOps Pipeline on AWS using Terraform, EKS, Jenkins, ArgoCD, and Secrets Management - INFRA Repo**
+> **Team:** ITIOPS: CLOUDSUITEx - INFRA
 
 ---
 
-![image](itiops-diagram02.png)
+## 📑 Table of Contents
 
-## ✨ Contributors
+1. [🚀 Project Overview](#project-overview)
+2. [🏗 Architecture Diagram](#architecture-diagram)
+3. [📋 Prerequisites](#prerequisites)
+4. [1. Infrastructure Provisioning (Terraform)](#infrastructure-provisioning-terraform)
+5. [2. CI Pipeline (Jenkins)](#ci-pipeline-jenkins)
+6. [3. CD Pipeline (ArgoCD & Argo Image Updater)](#cd-pipeline-argocd--argo-image-updater)
+7. [4. Secrets Management (External Secrets Operator)](#secrets-management-external-secrets-operator)
+8. [5. Security Scanning (Trivy)](#security-scanning-trivy)
+9. [6. Monitoring & Visualization (Prometheus & Grafana)](#monitoring--visualization-prometheus--grafana)
+10. [7. Ingress & HTTPS (Route 53 & ACM)](#ingress--https-route 53--acm)
+11. [8. Application Deployment](#application-deployment)
+12. [📖 Detailed Setup & Execution](#detailed-setup--execution)
+13. [📝 CI/CD Flow Summary](#cicd-flow-summary)
 
-This project would not have been possible without the valuable contributions of these collaborators:
+---
+
+## 🚀 Project Overview
+
+**Objective:** Provision and deploy a secure AWS infrastructure and CI/CD pipeline. Deploy a Node.js web application with MySQL and Redis, integrate security scanning, and set up monitoring and alerting.
+
+**Key Features:**
+
+* Infrastructure as Code with Terraform
+* Continuous Integration with Jenkins
+* GitOps-driven Continuous Delivery via ArgoCD & Argo Image Updater
+* Secrets Management using External Secrets Operator & AWS Secrets Manager
+* Security Scanning with Trivy
+* Monitoring & Visualization using Prometheus & Grafana
+* Ingress & HTTPS using Amazon Route 53 and AWS Certificate Manager (ACM)
+
+---
+
+## 🏗 Architecture Diagram
+
+![Architecture Diagram](itiops-diagram02.png)
+
+---
+
+## 📋 Prerequisites
+
+* AWS account with permissions for EKS, ACM, Route 53, Secrets Manager, ECR, IAM, and Networking
+* Terraform v1.0+
+* kubectl v1.23+
+* Helm v3+
+* Jenkins with Docker agent
+* Git repository with application code
+
+---
+
+## 1. Infrastructure Provisioning (Terraform)
+
+Terraform modules provision:
+
+* **Networking:** VPC with 3 public and 3 private subnets across 3 AZs
+* **Gateways & Routing:** Internet Gateway, NAT Gateways, Route Tables
+* **EKS Cluster:** Managed control plane and node groups in private subnets
+* **IAM:** Roles & policies for EKS, Jenkins, ArgoCD, and External Secrets Operator
+
+```bash
+cd terraform
+terraform init
+terraform apply -auto-approve
+```
+
+---
+
+## 2. CI Pipeline (Jenkins)
+
+Installed via Helm into EKS. Jenkins Pipelines:
+
+1. **Clone** Node.js app repository
+2. **Build** Docker image
+3. **Scan** image with Trivy
+4. **Push** image to Amazon ECR
+5. **Apply** Terraform changes
+
+```groovy
+tage 'Security Scan'
+steps {
+  sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_URL'
+}
+```
+
+---
+
+## 3. CD Pipeline (ArgoCD & Argo Image Updater)
+
+* **ArgoCD** syncs Kubernetes manifests from Git.
+* **Argo Image Updater** monitors ECR tags, updates manifests, triggers GitOps flow.
+
+```bash
+helm upgrade --install argocd argo/argo-cd --namespace argocd
+helm upgrade --install image-updater argo/argo-image-updater --namespace argocd
+```
+
+---
+
+## 4. Secrets Management (External Secrets Operator)
+
+Integrates with AWS Secrets Manager to inject:
+
+* Database credentials
+* Redis credentials
+
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: db-credentials
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets
+  target:
+    name: db-secret
+  data:
+    - secretKey: username
+      remoteRef:
+        key: myapp-db-creds
+        property: username
+```
+
+---
+
+## 5. Security Scanning (Trivy)
+
+Automated container image vulnerability scanning in Jenkins:
+
+* Scans for HIGH and CRITICAL vulnerabilities
+* Fails the build on detections
+* Generates HTML & JSON reports
+
+```bash
+trivy image --format template --template "@contrib/html.tpl" -o trivy-report.html $IMAGE_URL
+```
+
+---
+
+## 6. Monitoring & Visualization (Prometheus & Grafana)
+
+* **Prometheus:** Scrapes metrics from the Node.js app, Kubernetes, and system components
+* **Grafana:** Dashboards for app performance, cluster health, and alerting
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/prometheus
+helm install grafana grafana/grafana
+```
+
+Import custom dashboards under `./monitoring/dashboards` via Grafana UI.
+
+---
+
+## 7. Ingress & HTTPS (Route 53 & ACM)
+
+* **Route 53:** DNS hosted zone for `example.com`
+* **ACM:** Provision and validate public TLS certificate
+* **ALB Ingress Controller:** Annotated to use ACM certificate
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  annotations:
+  ........
+  ........
+
+```
+
+---
+
+## 8. Application Deployment
+
+Deploys a Node.js web application with MySQL and Redis pods:
+
+
+Environment variables and secrets are managed via External Secrets Operator.
+
+---
+
+
+## 📝 CI/CD Flow Summary
+
+1. **Code Commit:** Push changes to Git (manifests & source)
+2. **Jenkins:** Builds, scans, and pushes Docker image 
+3. **ECR:** New image tag pushed
+4. **Argo Image Updater:** Detects new tag, updates Git manifests
+5. **ArgoCD:** Syncs updated manifests to EKS
+
+---
+
+*Developed with ❤️ by ITIOPS: CLOUDSUITEx - INFRA Team*
+
+## ✨ Team 
 
 <div align="center">
 
@@ -45,232 +237,3 @@ This project would not have been possible without the valuable contributions of 
 
 
 <br>
-
-## 📋 Table of Contents
-
-- [🔧 Prerequisites](#-prerequisites)
-- [☁️ EKS Cluster Setup](#%ef%b8%8f-eks-cluster-setup)
-  - [🔗 Connect `kubectl` to EKS Cluster](#-connect-kubectl-to-eks-cluster)
-  - [🎠 Install AWS Load Balancer Controller](#-install-aws-load-balancer-controller)
-  - [⚙️ Install EBS CSI Driver](#%ef%b8%8f-install-ebs-csi-driver)
-- [⚙️ Jenkins Setup](#%ef%b8%8f-install-jenkins-via-helm)
-  - [⚙️ Install Jenkins (via Helm)](#%ef%b8%8f-install-jenkins-via-helm)
-  - [🔑 Jenkins ECR Integration](#-jenkins-ecr-integration)
-  - [🚀 Jenkins Pipeline (Kaniko to ECR)](#-jenkins-pipeline-kaniko-to-ecr)
-- [🛥️ ArgoCD Setup](#-install-argocd)
-  - [⚙️ ArgoCD App Deployment Example](#%ef%b8%8f-argocd-app-deployment-example)
-  - [🔄 ArgoCD Image Updater Setup](#-argocd-image-updater-setup)
-  - [🔑 Git Credentials for ArgoCD](#-git-credentials-for-argocd)
-
-
----
-
-## 🔧 Prerequisites
-
-- `aws cli` configured with appropriate permissions
-- `terraform` installed on host machine to deploy infrastructure
-- `kubectl` installed and configured
-- `eksctl` installed
-- `helm` installed
-
----
-
-## ☁️ EKS Cluster Setup
-
-Provision your EKS cluster using Terraform. Ensure that the cluster is up and running before proceeding.
-
-
-
-### 🔹 Connect `kubectl` to EKS Cluster
-
-```bash
-aws eks update-kubeconfig --name eks-cluster --region us-east-1
-```
-
-
-
-### 🔹 Install AWS Load Balancer Controller
-
-1. **Download IAM Policy:**
-
-   ```bash
-   curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.12.0/docs/install/iam_policy.json
-   ```
-
-2. **Create IAM Policy:**
-
-   ```bash
-   aws iam create-policy \
-       --policy-name AWSLoadBalancerControllerIAMPolicy \
-       --policy-document file://iam_policy.json
-   ```
-
-3. **Associate IAM OIDC Provider:**
-
-   ```bash
-   eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=eks-cluster --approve
-   ```
-
-4. **Create IAM Service Account:**
-
-   ```bash
-   eksctl create iamserviceaccount \
-       --cluster=eks-cluster \
-       --namespace=kube-system \
-       --name=aws-load-balancer-controller \
-       --attach-policy-arn=arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
-       --override-existing-serviceaccounts \
-       --region us-east-1 \
-       --approve
-   ```
-
-   > **Note:** Replace `<ACCOUNT_ID>` with your AWS account ID.
-
-5. **Install via Helm:**
-
-   ```bash
-   helm repo add eks https://aws.github.io/eks-charts
-   helm repo update
-   helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-     -n kube-system \
-     --set clusterName=eks-cluster \
-     --set serviceAccount.create=false \
-     --set serviceAccount.name=aws-load-balancer-controller
-   ```
-
-6. **Verify Installation:**
-
-   ```bash
-   kubectl get deployment -n kube-system aws-load-balancer-controller
-   ```
-
-
-
-
-### 🔹 Install EBS CSI Driver
-
-```bash
-eksctl create iamserviceaccount \
-    --name ebs-csi-controller-sa \
-    --namespace kube-system \
-    --cluster eks-cluster \
-    --role-name AmazonEKS_EBS_CSI_DriverRole \
-    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-    --region us-east-1 \
-    --approve
-```
-
----
-
-## ⚙️ Install Jenkins (via Helm)
-
-1. **Add Helm Repo & Create Namespace:**
-
-   ```bash
-   helm repo add jenkinsci https://charts.jenkins.io
-   helm repo update
-   kubectl create namespace jenkins-ns
-   ```
-
-2. **Prepare Values File:**
-
-   ```bash
-   helm show values jenkinsci/jenkins > /tmp/jenkins.yml
-   ```
-
-3. **Edit `/tmp/jenkins.yml` to set `serviceType: LoadBalancer` and configure ingress.**
-
-4. **Install Jenkins:**
-
-   ```bash
-   helm install jenkins jenkinsci/jenkins --values /tmp/jenkins.yml -n jenkins-ns
-   ```
-
-5. **Get Jenkins Password:**
-
-   ```bash
-   kubectl exec --namespace jenkins-ns -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password
-   ```
-
-6. **Get LoadBalancer IP:**
-
-   ```bash
-   kubectl get svc --namespace jenkins-ns jenkins
-   ```
-
----
-
-## 🔑 Jenkins ECR Integration
-
-1. **Create IAM Policy & User:**
-
-2. **Create ECR Repository:**
-
-3. **Create Kubernetes Secret:**
-
----
-
-## 🚀 Jenkins Pipeline (Kaniko to ECR)
-
-Set up your Jenkins pipeline using the `Jenkinsfile` provided in the repository.
-
----
-
-## 🛥️ Install ArgoCD
-
-```bash
-kubectl create namespace argocd
-helm repo add argo https://argoproj.github.io/argo-helm
-helm repo update
-helm install argocd argo/argo-cd --namespace argocd
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-kubectl get svc -n argocd argocd-server
-```
-
----
-
-## ⚙️ ArgoCD App Deployment Example
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: argotest-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/M-Samii/Argo-repo.git
-    targetRevision: HEAD
-    path: k8s
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argoapp
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-```
-
----
-
-## 🔄 ArgoCD Image Updater Setup
-
-1. **Create Namespace & Secret:**
-
-2. **Install Image Updater:**
-
-3. **Check Logs:**
-
----
-
-## 🔑 Git Credentials for ArgoCD
-
-```bash
-kubectl -n argocd create secret generic git-creds \
-  --from-file=sshPrivateKey=/home/ec2-user/.ssh/id_rsa
-```
-
-
