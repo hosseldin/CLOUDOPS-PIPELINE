@@ -127,10 +127,10 @@ pipeline {
                 container('kaniko') {
                     sh """
                         /kaniko/executor \
-                        --tarPath=/workspace/image.tar \
-                        --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER} \
-                        --dockerfile=Dockerfile \
-                        --cache
+                            --tarPath=/workspace/image.tar \
+                            --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER} \
+                            --dockerfile=${WORKSPACE}/${TARGET_FOLDER}/Dockerfile \
+                            --cache
                     """
                 }
             }
