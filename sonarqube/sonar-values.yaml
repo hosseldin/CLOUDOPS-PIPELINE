@@ -38,7 +38,7 @@ postgresql:
 
 # Service configuration
 service:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     web: 
       port: 9000
