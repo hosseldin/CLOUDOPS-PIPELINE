@@ -26,9 +26,7 @@ pipeline {
                   volumeMounts:
                     - name: workspace
                       mountPath: /workspace
-                  env:
-                    - name: TZ
-                      value: "Africa/Cairo"
+
                 - name: sonar-scanner
                   image: sonarsource/sonar-scanner-cli:latest
                   command:
