@@ -98,8 +98,47 @@ data:
 ```bash
 kubectl apply -f k8s/aws-secret.yaml -n jenkins-ns
 ```
-
 ---
+
+### 🚀 Deploying Jenkins with Helm
+
+#### 1. **Prepare Values File**
+
+Generate the default values file:
+
+```bash
+helm show values jenkinsci/jenkins > /tmp/jenkins.yml
+```
+
+Edit `/tmp/jenkins.yml`:
+
+* Set `controller.serviceType` to `LoadBalancer`.
+* Configure the `controller.ingress` section if you plan to use Ingress.
+
+#### 2. **Install Jenkins**
+
+```bash
+helm install jenkins jenkinsci/jenkins --values /tmp/jenkins.yml -n jenkins-ns
+```
+
+> Make sure the `jenkins-ns` namespace exists, or create it using:
+>
+> ```bash
+> kubectl create namespace jenkins-ns
+> ```
+
+#### 3. **Get Jenkins Admin Password**
+
+```bash
+kubectl exec --namespace jenkins-ns -it svc/jenkins -c jenkins -- \
+  cat /run/secrets/additional/chart-admin-password
+```
+
+#### 4. **Get LoadBalancer IP**
+
+```bash
+kubectl get svc --namespace jenkins-ns jenkins
+```
 
 ## 🛠️ Pipeline Breakdown
 
