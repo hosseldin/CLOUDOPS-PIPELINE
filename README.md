@@ -8,7 +8,7 @@
 
 ---
 
-## ✨ Team 
+## ✨ Collaborators 
 
 <div align="center">
 
@@ -244,7 +244,7 @@ Environment variables and secrets are managed via External Secrets Operator.
 
 *Developed with ❤️ by ITIOPS Team*
 
-## ✨ Team 
+## ✨ Collaborators 
 
 <div align="center">
 
