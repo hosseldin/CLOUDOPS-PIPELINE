@@ -1,6 +1,47 @@
-# ITIOPS: CLOUDSUITEx - INFRA DevOps Capstone
+# ITIOPS: CLOUDSUITEx - INFRA
 
-> **Team:** ITIOPS: CLOUDSUITEx - INFRA
+---
+
+> **Team:** ITIOPS
+> ---
+> **Project:** CLOUDSUITEx - INFRA
+
+---
+
+## ✨ Team 
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/hossammahmoudatta/">
+        <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
+        <sub><b>Hossam Mahmoud</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/mina-safwat5/">
+        <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
+        <sub><b>Mina Safwat</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">
+        <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
+        <sub><b>Mahmoud Samy</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/mohamed-0mourad/">
+        <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
+        <sub><b>Mohammed Mourad</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ---
 
@@ -67,6 +108,7 @@ Terraform modules provision:
 ```bash
 cd terraform
 terraform init
+terraform validate
 terraform apply -auto-approve
 ```
 
@@ -77,16 +119,15 @@ terraform apply -auto-approve
 Installed via Helm into EKS. Jenkins Pipelines:
 
 1. **Clone** Node.js app repository
-2. **Build** Docker image
-3. **Scan** image with Trivy
-4. **Push** image to Amazon ECR
-5. **Apply** Terraform changes
+2. **Scan** code with SonarQube
+3. **Build** Docker image
+4. **Scan** image with Trivy
+5. **Push** image to Amazon ECR
+6. **Done!** Now on to the deployment process
 
-```groovy
-tage 'Security Scan'
-steps {
-  sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_URL'
-}
+```bash
+helm install jenkins jenkinsci/jenkins -n jenkins-ns
+kubectl create namespace jenkins-ns
 ```
 
 ---
@@ -94,7 +135,7 @@ steps {
 ## 3. CD Pipeline (ArgoCD & Argo Image Updater)
 
 * **ArgoCD** syncs Kubernetes manifests from Git.
-* **Argo Image Updater** monitors ECR tags, updates manifests, triggers GitOps flow.
+* **Argo Image Updater** monitors ECR tags, updates manifests, and triggers GitOps flow.
 
 ```bash
 helm upgrade --install argocd argo/argo-cd --namespace argocd
@@ -139,7 +180,10 @@ Automated container image vulnerability scanning in Jenkins:
 * Generates HTML & JSON reports
 
 ```bash
-trivy image --format template --template "@contrib/html.tpl" -o trivy-report.html $IMAGE_URL
+stage 'Security Scan'
+  steps {
+    sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_URL'
+  }
 ```
 
 ---
@@ -190,15 +234,15 @@ Environment variables and secrets are managed via External Secrets Operator.
 
 ## 📝 CI/CD Flow Summary
 
-1. **Code Commit:** Push changes to Git (manifests & source)
-2. **Jenkins:** Builds, scans, and pushes Docker image 
-3. **ECR:** New image tag pushed
-4. **Argo Image Updater:** Detects new tag, updates Git manifests
+1. **Code Commit:** Push changes to Git (source code)
+2. **Jenkins:** Builds, scans, and pushes Docker image
+3. **ECR:** Receives new Docker Image with updated tag
+4. **Argo Image Updater:** Detects new tag, updates deployment Git repo's manifests
 5. **ArgoCD:** Syncs updated manifests to EKS
 
 ---
 
-*Developed with ❤️ by ITIOPS: CLOUDSUITEx - INFRA Team*
+*Developed with ❤️ by ITIOPS Team*
 
 ## ✨ Team 
 
@@ -207,25 +251,25 @@ Environment variables and secrets are managed via External Secrets Operator.
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/hosseldin">
+      <a href="https://www.linkedin.com/in/hossammahmoudatta/">
         <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
         <sub><b>Hossam Mahmoud</b></sub>
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/mina-safwat-1">
+      <a href="https://www.linkedin.com/in/mina-safwat5/">
         <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
         <sub><b>Mina Safwat</b></sub>
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/M-Samii">
+      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">
         <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
         <sub><b>Mahmoud Samy</b></sub>
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/Mohamed0Mourad">
+      <a href="https://www.linkedin.com/in/mohamed-0mourad/">
         <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
         <sub><b>Mohammed Mourad</b></sub>
       </a>
