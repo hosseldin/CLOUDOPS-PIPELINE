@@ -60,6 +60,14 @@
 
 ---
 
+### 🔗 Related Repositories
+
+- [💻 Application Source Code](https://github.com/hosseldin/ITIOPS.CLOUDSUITEx-APPLICATION)
+- [🛠 Infrastructure Repo](https://github.com/hosseldin/ITIOPS.CLOUDSUITEx-INFRASTRUCTURE)
+- [🚀 Deployment Manifests (GitOps)](https://github.com/mina-safwat-1/ITIOPS.CLOUDSUITEx-DEPLOYMENT)
+
+---
+
 ## 🚀 Project Overview
 
 **Objective:** Provision and deploy a secure AWS infrastructure and CI/CD pipeline. Deploy a Node.js web application with MySQL and Redis, integrate security scanning, and set up monitoring and alerting.
@@ -241,6 +249,8 @@ Environment variables and secrets are managed via External Secrets Operator.
 
 *Developed with ❤️ by ITIOPS Team*
 
+---
+
 ## ✨ Collaborators 
 
 <div align="center">
@@ -271,5 +281,6 @@ Environment variables and secrets are managed via External Secrets Operator.
 </table>
 
 </div>
+
 
 <br>
