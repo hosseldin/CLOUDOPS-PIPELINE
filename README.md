@@ -1,10 +1,10 @@
-# ITIOPS: CLOUDSUITEx - INFRA
+# ITIOPS: CLOUDSUITEx - INFRASTRUCTURE
 
 ---
 
 > **Team:** ITIOPS
 > ---
-> **Project:** CLOUDSUITEx - INFRA
+> **Project:** CLOUDSUITEx - INFRASTRUCTURE
 
 ---
 
@@ -15,33 +15,34 @@
 <table>
   <tr>
     <td align="center">
-      <a href="https://www.linkedin.com/in/hossammahmoudatta/">
-        <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
-        <sub><b>Hossam Mahmoud</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
+      <sub><b>Hossam Mahmoud</b></sub><br />
+      <a href="https://github.com/hosseldin">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/hossammahmoudatta/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://www.linkedin.com/in/mina-safwat5/">
-        <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
-        <sub><b>Mina Safwat</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
+      <sub><b>Mina Safwat</b></sub><br />
+      <a href="https://github.com/mina-safwat-1">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/mina-safwat5/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">
-        <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
-        <sub><b>Mahmoud Samy</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
+      <sub><b>Mahmoud Samy</b></sub><br />
+      <a href="https://github.com/M-Samii">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://www.linkedin.com/in/mohamed-0mourad/">
-        <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
-        <sub><b>Mohammed Mourad</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
+      <sub><b>Mohammed Mourad</b></sub><br />
+      <a href="https://github.com/Mohamed0Mourad">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/mohamed-0mourad/">LinkedIn</a>
     </td>
   </tr>
 </table>
 
 </div>
+
 
 ---
 
@@ -251,28 +252,28 @@ Environment variables and secrets are managed via External Secrets Operator.
 <table>
   <tr>
     <td align="center">
-      <a href="https://www.linkedin.com/in/hossammahmoudatta/">
-        <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
-        <sub><b>Hossam Mahmoud</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
+      <sub><b>Hossam Mahmoud</b></sub><br />
+      <a href="https://github.com/hosseldin">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/hossammahmoudatta/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://www.linkedin.com/in/mina-safwat5/">
-        <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
-        <sub><b>Mina Safwat</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
+      <sub><b>Mina Safwat</b></sub><br />
+      <a href="https://github.com/mina-safwat-1">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/mina-safwat5/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">
-        <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
-        <sub><b>Mahmoud Samy</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
+      <sub><b>Mahmoud Samy</b></sub><br />
+      <a href="https://github.com/M-Samii">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://www.linkedin.com/in/mohamed-0mourad/">
-        <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
-        <sub><b>Mohammed Mourad</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
+      <sub><b>Mohammed Mourad</b></sub><br />
+      <a href="https://github.com/Mohamed0Mourad">GitHub</a> • 
+      <a href="https://www.linkedin.com/in/mohamed-0mourad/">LinkedIn</a>
     </td>
   </tr>
 </table>
