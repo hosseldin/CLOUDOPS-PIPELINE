@@ -1,23 +1,35 @@
-
-
 # 🚀 ArgoCD & Image Updater Setup Guide
 
-This guide walks you through installing **ArgoCD** for GitOps-based deployments and **ArgoCD Image Updater** to automatically update container images from **Amazon ECR**.
+This guide walks you through setting up **ArgoCD** for GitOps-based Kubernetes deployments and integrating **ArgoCD Image Updater** to automatically track and deploy updated images from **Amazon ECR**.
 
 ---
 
-## 🛥️ Install ArgoCD
+## 🛠️ Prerequisites
+
+* A running **EKS cluster**
+* **kubectl**, **eksctl**, **helm**, and **awscli** installed and configured
+* An **ECR repository** with container images
+* A **GitHub repository** containing your Helm or Kubernetes manifests
+
+---
+
+## 📦 Install ArgoCD
 
 ```bash
 kubectl create namespace argocd
+
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
-helm install argocd argo/argo-cd --namespace argocd
+
+helm install argocd argo/argo-cd \
+  --namespace argocd
 ```
 
 ---
 
-## 🌐 Expose ArgoCD via Ingress (ALB Example)
+## 🌐 Expose ArgoCD via ALB Ingress
+
+> Example using AWS ALB Ingress Controller
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -29,12 +41,12 @@ metadata:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/backend-protocol: HTTPS
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/healthcheck-path: /
     alb.ingress.kubernetes.io/healthcheck-port: "443"
     alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
     alb.ingress.kubernetes.io/group.name: itiproject-alb
-    alb.ingress.kubernetes.io/backend-protocol: HTTPS
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
 spec:
   ingressClassName: alb
   tls:
@@ -55,26 +67,24 @@ spec:
 
 ---
 
-## 🔐 ArgoCD Default Login Credentials
+## 🔐 Access ArgoCD
 
 ```bash
-# Username
+# Default Username
 admin
 
-# Decode Initial Password
+# Retrieve Initial Password
 kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath="{.data.password}" | base64 -d
+  -o jsonpath="{.data.password}" | base64 -d && echo
 ```
 
 ---
 
-## ⚙️ ArgoCD Application Deployment Example
+## 📂 Deploy a Sample Application
 
 ```bash
 kubectl create namespace argoapp
 ```
-
-Minimal ArgoCD `Application`:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -103,15 +113,32 @@ spec:
 
 ## 🌀 ArgoCD Image Updater Setup
 
-### 1️⃣ IAM Permissions
+### 🔧 1. Create IAM Service Account
 
-Ensure your worker nodes (or IRSA role if using EKS) have permissions to access ECR (e.g., `ecr:GetAuthorizationToken`, `ecr:BatchGetImage`, etc.).
+```bash
+eksctl create iamserviceaccount \
+  --name argocd-image-updater \
+  --namespace argocd \
+  --cluster eks-cluster \
+  --attach-policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly \
+  --approve \
+  --override-existing-serviceaccounts
+```
+
+> To delete it later:
+
+```bash
+eksctl delete iamserviceaccount \
+  --name argocd-image-updater \
+  --namespace argocd \
+  --cluster eks-cluster
+```
 
 ---
 
-### 2️⃣ Install ArgoCD Image Updater
+### 📦 2. Install ArgoCD Image Updater
 
-Create `image-updater-values.yaml`:
+**Create `image-updater-values.yaml`:**
 
 ```yaml
 config:
@@ -130,18 +157,21 @@ authScripts:
   scripts:
     ecr-login.sh: |
       #!/bin/sh
-      aws ecr --region "<region>" get-authorization-token \
-        --output text --query 'authorizationData[].authorizationToken' | base64 -d
+      export HOME=/tmp
+      aws ecr --region "us-east-1" get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d
 ```
 
-Install via Helm:
+**Install with Helm:**
 
 ```bash
 helm upgrade --install argocd-image-updater argo/argocd-image-updater \
-  --namespace argocd -f image-updater-values.yaml
+  --namespace argocd \
+  -f image-updater-values.yaml \
+  --set serviceAccount.name=argocd-image-updater \
+  --set serviceAccount.create=false
 ```
 
-✅ Check Logs:
+**Check Logs:**
 
 ```bash
 kubectl logs -n argocd deploy/argocd-image-updater
@@ -149,16 +179,16 @@ kubectl logs -n argocd deploy/argocd-image-updater
 
 ---
 
-### 3️⃣ GitHub Deploy Key & Git Secret Setup
+### 🔑 3. Configure Git Access
 
-Generate SSH key:
+**Generate SSH Key:**
 
 ```bash
-ssh-keygen
+ssh-keygen -t rsa -b 4096 -C "argocd-image-updater"
 ```
 
-* Add the **public key** to your GitHub repo under **Deploy Keys**.
-* Add the **private key** to ArgoCD as a Kubernetes secret:
+* Add the **public key** to your GitHub repo → **Settings → Deploy Keys**
+* Add the **private key** to Kubernetes:
 
 ```bash
 kubectl -n argocd create secret generic git-creds \
@@ -167,7 +197,7 @@ kubectl -n argocd create secret generic git-creds \
 
 ---
 
-### 4️⃣ Annotated ArgoCD Application with Image Updater
+### 🏷️ 4. Annotate ArgoCD App for Image Updates
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -197,7 +227,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
-      allowEmpty: false
     syncOptions:
       - Validate=true
       - CreateNamespace=false
@@ -206,3 +235,12 @@ spec:
 ```
 
 ---
+
+## ✅ Final Notes
+
+* You should now have ArgoCD managing your applications, and the Image Updater will keep container images in sync with the latest available builds from Amazon ECR.
+* Make sure your image tag strategy matches your CI/CD pipeline's output (e.g., tags starting with `v`).
+
+---
+
+Would you like a PDF version of this guide or a downloadable Markdown file?
