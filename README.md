@@ -232,7 +232,7 @@ metadata:
 Deploys a Node.js web application with MySQL and Redis pods:
 
 
-Environment variables and secrets are managed via External Secrets Operator.
+Environment variables and secrets are managed via External Secrets Operator
 
 ---
 
