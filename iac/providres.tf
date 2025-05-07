@@ -7,12 +7,12 @@ terraform {
     }
   }
 
-  backend "s3" {
-    bucket       = "terraform-state-project-1"
-    region       = "us-east-1"
-    key          = "state.tfstate"
-    use_lockfile = true
-  }
+  #   backend "s3" {
+  #     bucket       = "terraform-state-project-1"
+  #     region       = "us-east-1"
+  #     key          = "state.tfstate"
+  #     use_lockfile = true
+  #   }
 }
 
 provider "aws" {

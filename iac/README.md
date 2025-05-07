@@ -1,4 +1,4 @@
-# ⚙️ Infrastructure Provisioning with Terraform 🚀
+# ⚙️ AWS Infrastructure Provisioning with Terraform 🚀
 
 This repository uses **Terraform** to provision a robust AWS infrastructure foundation, including networking, routing, a production-grade EKS cluster, and IAM roles & policies for key platform components. Each major component is organized into reusable Terraform modules for clarity and scalability.
 
