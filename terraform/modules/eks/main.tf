@@ -4,10 +4,6 @@ resource "aws_eks_cluster" "eks" {
   version  = "1.28"
 
   bootstrap_self_managed_addons = true
-  # storage_config {
-
-  # }
-
 
   # Enable access entries for authentication
   access_config {
@@ -17,8 +13,8 @@ resource "aws_eks_cluster" "eks" {
 
   vpc_config {
     subnet_ids              = var.private_subnets
+    endpoint_public_access  = true
     endpoint_private_access = true
-    endpoint_public_access  = false
     security_group_ids      = [aws_security_group.eks_api.id]
   }
 
@@ -31,6 +27,13 @@ resource "aws_eks_cluster" "eks" {
 
 
   depends_on = [var.cluster_role_arn]
+
+
+  provisioner "local-exec" {
+    command = <<EOT
+      aws eks update-kubeconfig --name ${self.name} --region ${var.region}
+    EOT
+  }
 }
 
 resource "aws_eks_node_group" "nodes" {
@@ -67,10 +70,24 @@ resource "aws_security_group" "eks_api" {
   }
 }
 
-# resource "aws_eks_addon" "ebs_csi" {
-#   cluster_name = aws_eks_cluster.eks.name
-#   addon_name   = "aws-ebs-csi-driver"
-#   service_account_role_arn = var.eks_nodes_role_arn
-# }
+
+data "tls_certificate" "eks" {
+  url = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+}
 
 
+# Create the IAM OIDC provider for the EKS cluster
+resource "aws_iam_openid_connect_provider" "oidc_provider" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+}
+
+
+output "oidc_provider_url" {
+  value = aws_iam_openid_connect_provider.oidc_provider.url
+}
+
+output "eks_cluster_endpoint" {
+  value = aws_eks_cluster.eks.endpoint
+}

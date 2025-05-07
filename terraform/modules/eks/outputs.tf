@@ -9,3 +9,12 @@ output "cluster_endpoint" {
 output "cluster_ca" {
   value = aws_eks_cluster.eks.certificate_authority[0].data
 }
+
+
+output "oidc_provider_arn" {
+  value = aws_iam_openid_connect_provider.oidc_provider.arn
+}
+
+output "cluster_issuer" {
+  value = aws_eks_cluster.eks.identity[0].oidc[0].issuer  
+}

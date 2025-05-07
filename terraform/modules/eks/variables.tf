@@ -24,3 +24,10 @@ variable "vpc_cidr" {
 variable "eks_nodes_role_arn" {
  type = string 
 }
+
+
+variable "region" {
+  type = string
+  default = "us-east-1"
+  
+}

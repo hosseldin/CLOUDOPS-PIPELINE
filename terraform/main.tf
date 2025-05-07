@@ -16,3 +16,19 @@ module "eks" {
   vpc_cidr           = module.vpc.vpc_cidr
   eks_nodes_role_arn = module.iam.eks_nodes_role_arn
 }
+
+
+module "load_balancer" {
+  source = "./extensions/load_balancer"
+  cluster_issuer = module.eks.cluster_issuer
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  cluster_name = module.eks.cluster_name
+  depends_on = [ module.eks, module.iam, module.vpc ]
+}
+
+
+module "monitoring" {
+  source = "./extensions/monitoring"
+  depends_on = [ module.eks, module.iam, module.vpc, module.load_balancer ]
+  
+}
