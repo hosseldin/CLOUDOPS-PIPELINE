@@ -1,0 +1,18 @@
+config:
+  registries:
+    - name: ECR
+      api_url: https://${account_id}.dkr.ecr.${region}.amazonaws.com
+      prefix: "${account_id}.dkr.ecr.${region}.amazonaws.com"
+      ping: yes
+      default: true
+      insecure: false
+      credentials: ext:/scripts/ecr-login.sh
+      credsexpire: 1h
+
+authScripts:
+  enabled: true
+  scripts:
+    ecr-login.sh: |
+      #!/bin/sh
+      export HOME=/tmp
+      aws ecr --region "${region}" get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d

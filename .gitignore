@@ -35,3 +35,8 @@ terraform/*.key
 terraform/*.pub
 
 terraform/my-aws-key*
+
+
+
+
+terraform/extensions/argocd/id_rsa
