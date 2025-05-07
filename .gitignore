@@ -30,8 +30,8 @@ terraform.tfvars
 *.pub
 
 # Ignore credentials in terraform (if any are stored)
-terraform/*.pem
-terraform/*.key
-terraform/*.pub
+iac/*.pem
+iac/*.key
+iac/*.pub
 
-terraform/my-aws-key*
+iac/my-aws-key*
