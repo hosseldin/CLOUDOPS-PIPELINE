@@ -17,6 +17,12 @@ module "eks" {
   eks_nodes_role_arn = module.iam.eks_nodes_role_arn
 }
 
+module "route53" {
+  source = "./modules/route53"
+  
+}
+
+
 
 module "load_balancer" {
   source = "./extensions/load_balancer"
@@ -27,8 +33,10 @@ module "load_balancer" {
 }
 
 
+
 module "monitoring" {
   source = "./extensions/monitoring"
+  zone_id = module.route53.zone_id
   depends_on = [ module.eks, module.iam, module.vpc, module.load_balancer ]
   
 }
