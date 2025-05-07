@@ -66,3 +66,11 @@ module "argocd" {
   sshPrivateKey_path = "./extensions/argocd/id_rsa"
   depends_on = [ module.eks, module.iam, module.vpc, module.load_balancer, data.aws_caller_identity.current, module.route53 ] 
 }
+
+module "sonarqube" {
+  source = "./extensions/sonarqube"
+  zone_id = module.route53.zone_id
+
+  depends_on = [ module.eks, module.iam, module.vpc, module.load_balancer, module.route53 ]
+  
+}
