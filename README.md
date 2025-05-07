@@ -1,175 +1,286 @@
-# CLOUDOPS-PIPELINE
-Official Repo for the Full GitOps Pipeline on AWS with Terraform, and Secrets Management Project
+# ITIOPS: CLOUDSUITEx - INFRASTRUCTURE
 
+---
 
-## ✨ Contributors
+> **Team:** ITIOPS
+> ---
+> **Project:** CLOUDSUITEx - INFRASTRUCTURE
 
-This project would not have been possible without the valuable contributions of these collaborators:
+---
+
+## ✨ Collaborators 
+
+<div align="center">
 
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/hosseldin">
-        <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
-        <sub><b>Hossam Mahmoud</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
+      <a href="https://github.com/hosseldin"><sub><b>Hossam Mahmoud</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/hossammahmoudatta/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://github.com/mina-safwat-1">
-        <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
-        <sub><b>Mina Safwat</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
+      <a href="https://github.com/mina-safwat-1"><sub><b>Mina Safwat</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/mina-safwat5/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://github.com/M-Samii">
-        <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
-        <sub><b>Mahmoud Samy</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
+      <a href="https://github.com/M-Samii"><sub><b>Mahmoud Samy</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://github.com/Mohamed0Mourad">
-        <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
-        <sub><b>Mohammed Mourad</b></sub>
-      </a>
+      <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
+      <a href="https://github.com/Mohamed0Mourad"><sub><b>Mohammed Mourad</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/mohamed-0mourad/">LinkedIn</a>
     </td>
   </tr>
 </table>
 
-<br>
+</div>
 
-## Brief 📃
-This project implements a database system coded in Bash, powered by Zenity GUI.
-The DBMS provides basic operations like creating, reading, updating, and deleting databases/tables. It is implemented in a very user-friendly way, achieving smooth and instant transitions between menu operations.
-
-## Features 🌟
-  - Create Database
-  - View Databases
-  - Drop Database
-  - **Connect to Database**
-    - ***Operations:***
-      - Create Table
-      - View Table
-      - Drop Table
-      - Insert Data into Table
-      - Update Data into Table
-      - Delete Data from Table
-  - Error Handling
-<br>
-
-## Project Structure 🪜
-The project is structured in the following manner:
-
-- **Main Menu APIs**
-  - `mainMenu.sh`
-  - `createDataBase.sh`
-  - `dropDataBase.sh`
-  - `listDataBase.sh`
-  - `connectDatabase.sh`
-  - `connectMenu.sh`
-- **Connect Database Menu APIs**
-  - `createTable.sh`
-  - `deleteFromTable.sh`
-  - `dropTable.sh`
-  - `insertTable.sh`
-  - `listTable.sh`
-  - `pickTable.sh`
-  - `selectFromTable.sh`
-  - `updateTable.sh`
-
-<br>
-
-## Requirements to Run 📃
-- Bash / Zsh Shell
-- Zenity (to enable the GUI interface)
-- Linux-based operating system
-
-<br>
-
-## Usage 🪧
-## Prerequisites
-### Install Zenity
-Zenity is required to run the graphical interface. Install it using:
-### For RedHat Based 💻:
-```bash
-sudo yum install zenity
-```
-or
-### For Debian Based 💻:
-```bash
-sudo apt-get install zenity
-```
-
-<br>
-
-## To Run the App 🏃🏻
-You can run the application by running this command: **`./mainMenu.sh`**
-
-<br>
-
-## Directory Setup 🎚️
-The script ensures that a directory named `DATABASES` is created in the main directory if it does not exist. This directory will contain all the databases created and their corresponding tables.
-
-<br>
-
-## License 🪪
-This project is licensed under the GPL License.
-
-<br>
-
-## Acknowledgments 🏁
-- [Zenity Documentation](https://help.gnome.org/users/zenity/stable/)
-- Bash scripting community and resources
-- Project Description inspired by Tohamey & Samy
-
-<br>
-
-## Future Enhancements 💭
-- Add support for advanced SQL-like queries.
-- Add security measures for database access.
 
 ---
 
-Thank you for using our DBMS!  
-Feel free to reach out if you encounter any issues or have suggestions.
-- [Hossam Mahmoud](hossam.uddin1@gmail.com) ✉️
-- [Abdelrahman Khaled](Abdelrahmankhalid27@gmail.com) ✉️
-- [Zeyad Tarek](ziadtarekmohamed32@gmail.com) ✉️
+## 📑 Table of Contents
+
+1. [🚀 Project Overview](#project-overview)
+2. [🏗 Architecture Diagram](#architecture-diagram)
+3. [📋 Prerequisites](#prerequisites)
+4. [1. Infrastructure Provisioning (Terraform)](#infrastructure-provisioning-terraform)
+5. [2. CI Pipeline (Jenkins)](#ci-pipeline-jenkins)
+6. [3. CD Pipeline (ArgoCD & Argo Image Updater)](#cd-pipeline-argocd--argo-image-updater)
+7. [4. Secrets Management (External Secrets Operator)](#secrets-management-external-secrets-operator)
+8. [5. Security Scanning (Trivy)](#security-scanning-trivy)
+9. [6. Monitoring & Visualization (Prometheus & Grafana)](#monitoring--visualization-prometheus--grafana)
+10. [7. Ingress & HTTPS (Route 53 & ACM)](#ingress--https-route 53--acm)
+11. [8. Application Deployment](#application-deployment)
+12. [📖 Detailed Setup & Execution](#detailed-setup--execution)
+13. [📝 CI/CD Flow Summary](#cicd-flow-summary)
+
+---
+
+### 🔗 Related Repositories
+
+- [💻 Application Source Code](https://github.com/hosseldin/ITIOPS.CLOUDSUITEx-APPLICATION)
+- [🛠 Infrastructure Repo](https://github.com/hosseldin/ITIOPS.CLOUDSUITEx-INFRASTRUCTURE)
+- [🚀 Deployment Manifests (GitOps)](https://github.com/mina-safwat-1/ITIOPS.CLOUDSUITEx-DEPLOYMENT)
+
+---
+
+## 🚀 Project Overview
+
+**Objective:** Provision and deploy a secure AWS infrastructure and CI/CD pipeline. Deploy a Node.js web application with MySQL and Redis, integrate security scanning, and set up monitoring and alerting.
+
+**Key Features:**
+
+* Infrastructure as Code with Terraform
+* Continuous Integration with Jenkins
+* GitOps-driven Continuous Delivery via ArgoCD & Argo Image Updater
+* Secrets Management using External Secrets Operator & AWS Secrets Manager
+* Security Scanning with Trivy
+* Monitoring & Visualization using Prometheus & Grafana
+* Ingress & HTTPS using Amazon Route 53 and AWS Certificate Manager (ACM)
+
+---
+
+## 🏗 Architecture Diagram
+
+![Architecture Diagram](itiops-diag.png)
+
+---
+
+## 📋 Prerequisites
+
+* AWS account with permissions for EKS, ACM, Route 53, Secrets Manager, ECR, IAM, and Networking
+* Terraform v1.0+
+* kubectl v1.23+
+* Helm v3+
+* Jenkins with Docker agent
+* Git repository with application code
+
+---
+
+## 1. Infrastructure Provisioning (Terraform)
+
+Terraform modules provision:
+
+* **Networking:** VPC with 3 public and 3 private subnets across 3 AZs
+* **Gateways & Routing:** Internet Gateway, NAT Gateways, Route Tables
+* **EKS Cluster:** Managed control plane and node groups in private subnets
+* **IAM:** Roles & policies for EKS, Jenkins, ArgoCD, and External Secrets Operator
+
+```bash
+cd terraform
+terraform init
+terraform validate
+terraform apply -auto-approve
+```
+
+---
+
+## 2. CI Pipeline (Jenkins)
+
+Installed via Helm into EKS. Jenkins Pipelines:
+
+1. **Clone** Node.js app repository
+2. **Scan** code with SonarQube
+3. **Build** Docker image
+4. **Scan** image with Trivy
+5. **Push** image to Amazon ECR
+6. **Done!** Now on to the deployment process
+
+```bash
+helm install jenkins jenkinsci/jenkins -n jenkins-ns
+kubectl create namespace jenkins-ns
+```
+
+---
+
+## 3. CD Pipeline (ArgoCD & Argo Image Updater)
+
+* **ArgoCD** syncs Kubernetes manifests from Git.
+* **Argo Image Updater** monitors ECR tags, updates manifests, and triggers GitOps flow.
+
+```bash
+helm upgrade --install argocd argo/argo-cd --namespace argocd
+helm upgrade --install image-updater argo/argo-image-updater --namespace argocd
+```
+
+---
+
+## 4. Secrets Management (External Secrets Operator)
+
+Integrates with AWS Secrets Manager to inject:
+
+* Database credentials
+* Redis credentials
+
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: db-credentials
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets
+  target:
+    name: db-secret
+  data:
+    - secretKey: username
+      remoteRef:
+        key: myapp-db-creds
+        property: username
+```
+
+---
+
+## 5. Security Scanning (Trivy)
+
+Automated container image vulnerability scanning in Jenkins:
+
+* Scans for HIGH and CRITICAL vulnerabilities
+* Fails the build on detections
+* Generates HTML & JSON reports
+
+```bash
+stage 'Security Scan'
+  steps {
+    sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_URL'
+  }
+```
+
+---
+
+## 6. Monitoring & Visualization (Prometheus & Grafana)
+
+* **Prometheus:** Scrapes metrics from the Node.js app, Kubernetes, and system components
+* **Grafana:** Dashboards for app performance, cluster health, and alerting
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/prometheus
+helm install grafana grafana/grafana
+```
+
+Import custom dashboards under `./monitoring/dashboards` via Grafana UI.
+
+---
+
+## 7. Ingress & HTTPS (Route 53 & ACM)
+
+* **Route 53:** DNS hosted zone for `example.com`
+* **ACM:** Provision and validate public TLS certificate
+* **ALB Ingress Controller:** Annotated to use ACM certificate
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  annotations:
+  ........
+  ........
+
+```
+
+---
+
+## 8. Application Deployment
+
+Deploys a Node.js web application with MySQL and Redis pods:
 
 
-=====================================
-=====================================
+Environment variables and secrets are managed via External Secrets Operator
 
-Bash Shell Script Database Management System (DBMS):
+---
 
-The Project aim to develop DBMS, that will enable users to store and retrieve the data from main storage.
 
-The Project Features:
-The Application will be CLI Menu based app, that will provide to user this Menu items:
-Main Menu:
-- Create Database
-- List Databases
-- Connect To Databases
-- Drop Database
+## 📝 CI/CD Flow Summary
 
-Up on user Connect to Specific Database, there will be new Screen with this Menu:
-- Create Table 
-- List Tables
-- Drop Table
-- Insert into Table
-- Select From Table
-- Delete From Table
-- Update Row
+1. **Code Commit:** Push changes to Git (source code)
+2. **Jenkins:** Builds, scans, and pushes Docker image
+3. **ECR:** Receives new Docker Image with updated tag
+4. **Argo Image Updater:** Detects new tag, updates deployment Git repo's manifests
+5. **ArgoCD:** Syncs updated manifests to EKS
 
-Hints:
-- The Database will store as Directory on Current Script File
-- Don't use Absolute Path in your scripts
-- The Tables store in files, which can be CSV or JSON or XML File format
-- You can divide the Table info to two tables: Meta-data and Raw Data in separate files or the same file
-- When Create Table, The Meta Data of Table will be: Table Name, Number of Columns, Name Of Columns
-- There is assumption that First Column is Primary Key, which used for Delete Rows.
-- The Select of Rows displayed in screen/terminal in Accepted/Good Format
-- Keep track of Data Types (Digits or Strings) of Column and Validated user input based on it
+---
 
-The Bonus:
-- Make the App to accept SQL Code Instead of Above Menu Based
-- Make GUI of Application 'Plus" the current CLI view
+*Developed with ❤️ by ITIOPS Team*
+
+---
+
+## ✨ Collaborators 
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/hosseldin" width="100px;" alt="hosseldin"/><br />
+      <a href="https://github.com/hosseldin"><sub><b>Hossam Mahmoud</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/hossammahmoudatta/">LinkedIn</a>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/mina-safwat-1" width="100px;" alt="mina-safwat-1"/><br />
+      <a href="https://github.com/mina-safwat-1"><sub><b>Mina Safwat</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/mina-safwat5/">LinkedIn</a>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/M-Samii" width="100px;" alt="M-Samii"/><br />
+      <a href="https://github.com/M-Samii"><sub><b>Mahmoud Samy</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/mahmoud-samy-301b0b196/">LinkedIn</a>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/Mohamed0Mourad" width="100px;" alt="Mohamed0Mourad"/><br />
+      <a href="https://github.com/Mohamed0Mourad"><sub><b>Mohammed Mourad</b></sub></a><br />
+      <a href="https://www.linkedin.com/in/mohamed-0mourad/">LinkedIn</a>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+
+<br>

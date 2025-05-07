@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  selector:
+    matchLabels:
+      name: redis
+  replicas: {{ .Values.REDIS_REPLICA_COUNT }}
+  template:
+    metadata:
+      name: redis
+      labels:
+        name: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        ports:
+          - containerPort: {{ .Values.REDIS_PORT}}
+           

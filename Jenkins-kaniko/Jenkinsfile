@@ -1,0 +1,186 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: kaniko-sonar-trivy
+              namespace: jenkins-ns
+            spec:
+              serviceAccountName: kaniko-sa
+              containers:
+                - name: kaniko
+                  image: gcr.io/kaniko-project/executor:debug
+                  command:
+                    - /busybox/cat
+                  tty: true
+                  volumeMounts:
+                    - name: workspace
+                      mountPath: /workspace
+                - name: trivy
+                  image: aquasec/trivy:latest
+                  command:
+                    - cat
+                  tty: true
+                  volumeMounts:
+                    - name: workspace
+                      mountPath: /workspace
+
+                - name: sonar-scanner
+                  image: sonarsource/sonar-scanner-cli:latest
+                  command:
+                    - cat
+                  tty: true
+                  volumeMounts:
+                    - name: workspace
+                      mountPath: /workspace
+              volumes:
+                - name: workspace
+                  emptyDir: {}
+            '''
+        }
+    }
+
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REGISTRY = '773893527461.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REPOSITORY = 'node-app-jenkins'
+        TARGET_FOLDER = 'nodeapp'
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/hosseldin/CLOUDOPS-APP-PIPELINE.git', branch: 'main'
+            }
+        }
+
+        stage('SonarQube Code Analysis') {
+            steps {
+                container('sonar-scanner') {
+                    withCredentials([string(credentialsId: 'SONAR_AUTH_TOKEN', variable: 'SONAR_AUTH_TOKEN')]) {
+                        withSonarQubeEnv('MySonarQubeServer') {
+                            sh """
+                                sonar-scanner \
+                                -Dsonar.projectKey=node-app-jenkins \
+                                -Dsonar.sources=${TARGET_FOLDER} \
+                                -Dsonar.host.url=$SONAR_HOST_URL \
+                                -Dsonar.login=$SONAR_AUTH_TOKEN
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        // Wait for Quality Gate
+        stage('Wait for Quality Gate') {
+            steps {
+            script {
+                def qualityGate = waitForQualityGate()
+                if (qualityGate.status != 'OK') {
+                    error "❌ Quality Gate failed: ${qualityGate.status}"
+                } else {
+                    echo "✅ Quality Gate passed!"
+                }
+                }
+            }
+        }
+
+        stage('Build with Kaniko (No Push)') {
+            steps {
+                container('kaniko') {
+                    sh """
+                        /kaniko/executor \
+                        --context=dir://${WORKSPACE}/${TARGET_FOLDER} \
+                        --dockerfile=Dockerfile \
+                        --no-push \
+                        --tarPath=/workspace/image.tar
+                    """
+                }
+            }
+        }
+
+        stage('Scan with Trivy') {
+            steps {
+                container('trivy') {
+                    sh """
+                        trivy image \
+                        --exit-code 0 \
+                        --severity HIGH,CRITICAL \
+                        --no-progress \
+                        --input /workspace/image.tar
+                    """
+                }
+            }
+        }
+
+        stage('Push Image to ECR') {
+            steps {
+                container('kaniko') {
+                    sh """
+                        /kaniko/executor \
+                            --tarPath=/workspace/image.tar \
+                            --destination=${ECR_REGISTRY}/${ECR_REPOSITORY}:v${BUILD_NUMBER} \
+                            --dockerfile=${WORKSPACE}/${TARGET_FOLDER}/Dockerfile \
+                            --cache
+                    """
+                }
+            }
+        }
+    }
+    post {
+        success {
+            slackSend(
+                channel: 'eks-jenkins-notifications',
+                attachments: [
+                    [
+                        fallback: "Build #${env.BUILD_NUMBER} succeeded",
+                        color: '#36a64f', // Green
+                        title: "✅ Build #${env.BUILD_NUMBER} Success",
+                        text: """
+                            Project: *${env.JOB_NAME}*
+                            Branch: *${env.GIT_BRANCH}*
+                            Status: *SUCCESS* 🎉
+                            Commit: *${env.GIT_COMMIT.take(8)}*""",
+                        fields: [
+                            [ title: "Started by", value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}", short: true ],
+                            [ title: "Duration", value: "${currentBuild.durationString}", short: true ],
+                            [ title: "Logs", value: "<https://jenkins.itiproject.site/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console|Open Logs>", short: true ]
+                        ],
+                        image_url: 'https://mediaaws.almasryalyoum.com/news/large/2025/01/16/2583858_0.jpg'
+                    ]
+                ]
+            )
+        }
+        
+        failure {
+            slackSend(
+                channel: 'eks-jenkins-notifications',
+                attachments: [
+                    [
+                        fallback: "Build #${env.BUILD_NUMBER} failed",
+                        color: '#ff0000', // Red
+                        title: "❌ Build #${env.BUILD_NUMBER} Failed",
+                        text: """
+                            Project: *${env.JOB_NAME}*
+                            Branch: *${env.GIT_BRANCH}*
+                            Status: *FAILED* 💥
+                            Commit: *${env.GIT_COMMIT.take(8)}*""",
+                        fields: [
+                            [ title: "Started by", value: "${currentBuild.getBuildCauses()[0].userName ?: 'Auto Triggered'}", short: true ],
+                            [ title: "Duration", value: "${currentBuild.durationString}", short: true ],
+                            [ title: "Logs", value: "<https://jenkins.itiproject.site/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console|Open Logs>", short: true ]
+                        ],
+                        image_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvsAdsKSx1gPjT8fnirKhLQO_vNznIAo-RRg&s'
+                    ]
+                ]
+            )
+        }
+    }
+}

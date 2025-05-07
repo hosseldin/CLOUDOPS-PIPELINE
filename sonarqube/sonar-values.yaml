@@ -1,0 +1,56 @@
+# Node selection configuration
+nodeSelector:
+  sonarqube: "true"
+
+# Tolerations (if you added the taint)
+tolerations:
+- key: "sonarqube"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+
+# SonarQube configuration
+sonarProperties:
+  sonar.forceAuthentication: "true"
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: "gp2"
+  size: 10Gi
+  accessMode: ReadWriteOnce
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClass: "gp2"
+    size: 10Gi
+  # Add node selector and tolerations for PostgreSQL
+  nodeSelector:
+    sonarqube: "true"
+  tolerations:
+  - key: "sonarqube"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
+# Service configuration
+service:
+  type: ClusterIP
+  ports:
+    web: 
+      port: 9000
+monitoring:
+  passcodeSecretName: "sonarqube-monitoring-secret"
+  passcodeSecretKey: "passcode"
+
+# Resource limits
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "1000m"
+  limits:
+    memory: "4Gi"
+    cpu: "2000m"
