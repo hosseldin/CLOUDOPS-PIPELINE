@@ -86,7 +86,7 @@
 
 ## 🏗 Architecture Diagram
 
-![Architecture Diagram](itiops-diag.png)
+![Architecture Diagram](ITIOPS-DIAG.gif)
 
 ---
 
