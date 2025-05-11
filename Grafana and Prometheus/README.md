@@ -95,3 +95,8 @@ This command shows all pods related to Prometheus, Grafana, and exporters runnin
 
 
 ![image](https://github.com/user-attachments/assets/c1636689-8f54-4cff-b36a-3c71d52b73b6)
+
+
+to get grafana password
+
+kubectl get secret loki-grafana -n monitoring -o jsonpath="{.data.admin-password}"  | base64 --decode

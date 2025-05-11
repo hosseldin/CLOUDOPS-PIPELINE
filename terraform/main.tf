@@ -74,3 +74,12 @@ module "sonarqube" {
   depends_on = [ module.eks, module.iam, module.vpc, module.load_balancer, module.route53 ]
   
 }
+
+# module "external_secrets" {
+#   source = "./extensions/secret_manager"
+#   region = "us-east-1"
+#   oidc_provider_arn = module.eks.oidc_provider_arn
+#   cluster_issuer = module.eks.cluster_issuer
+#   depends_on = [ module.eks, module.iam, module.vpc, module.load_balancer ]
+  
+# }

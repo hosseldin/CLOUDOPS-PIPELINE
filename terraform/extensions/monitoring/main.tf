@@ -1,36 +1,32 @@
 
 
 resource "helm_release" "kube_prometheus_stack" {
-  name       = "prometheus"
+  name       = "monitoring-stack"
   namespace  = "monitoring"
   create_namespace = true
-  repository =  "https://prometheus-community.github.io/helm-charts"
-  chart      = "kube-prometheus-stack"
+  repository =  "https://grafana.github.io/helm-charts"
+  chart      = "loki-stack"
   
   set {
-    name  = "prometheus.service.type"
-    value = "ClusterIP"
+    name  = "grafana.enabled"
+    value = "true"
   }
 
   set {
-    name  = "grafana.adminPassword"
-    value = "admin"  # For production, replace with a secure password
+    name  = "promtail.enabled"
+    value = "true"  # For production, replace with a secure password
   }
 
   set {
-    name  = "grafana.service.port"
-    value = "80"
+    name  = "prometheus.enabled"
+    value = "true"
   }
 
   set {
-    name  = "grafana.service.targetPort"
-    value = "3000"
+    name  = "grafana.image.tag"
+    value = "latest"
   }
 
-  set {
-    name  = "grafana.service.type"
-    value = ""
-  }
 }
 
 resource "kubernetes_manifest" "grafana_ingress" {
@@ -66,7 +62,7 @@ resource "kubernetes_manifest" "grafana_ingress" {
             pathType = "Prefix"
             backend = {
               service = {
-                name = "prometheus-grafana"
+                name = "loki-grafana"
                 port = { number = 80 }
               }
             }
