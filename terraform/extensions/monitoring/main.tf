@@ -62,7 +62,7 @@ resource "kubernetes_manifest" "grafana_ingress" {
             pathType = "Prefix"
             backend = {
               service = {
-                name = "loki-grafana"
+                name = "${helm_release.kube_prometheus_stack.name}-grafana"
                 port = { number = 80 }
               }
             }
