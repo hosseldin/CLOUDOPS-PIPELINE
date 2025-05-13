@@ -39,4 +39,4 @@ terraform/my-aws-key*
 
 
 
-terraform/extensions/argocd/id_rsa
+terraform/workloads/modules/argocd/id_rsa

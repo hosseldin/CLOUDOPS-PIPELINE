@@ -216,6 +216,8 @@ resource "kubernetes_namespace" "argoapp" {
   }
 }
 
+
+
 resource "kubernetes_manifest" "my_app" {
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"

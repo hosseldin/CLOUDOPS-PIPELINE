@@ -10,7 +10,7 @@
 # IAM Policy for ECR Access
 resource "aws_iam_policy" "ecr_push" {
   name   = "ECRPushPolicy"
-  policy = file("./extensions/jenkins/jenkins-ecr-policy.json")
+  policy = file("./modules/jenkins/jenkins-ecr-policy.json")
 }
 
 

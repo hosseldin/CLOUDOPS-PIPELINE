@@ -57,7 +57,7 @@ resource "helm_release" "sonarqube" {
   wait       = true
 
   values = [
-    file("./extensions/sonarqube/sonar-values.yaml")
+    file("./modules/sonarqube/sonar-values.yaml")
   ]
 
   
