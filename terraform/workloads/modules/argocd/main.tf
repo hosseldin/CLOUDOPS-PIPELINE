@@ -11,6 +11,7 @@ resource "helm_release" "argocd" {
   chart      = "argo-cd"
   repository = "https://argoproj.github.io/argo-helm"
   namespace  = "argocd"
+
   depends_on = [kubernetes_namespace.argocd]
 }
 
@@ -210,86 +211,8 @@ resource "kubernetes_secret" "git_creds" {
 
 
 
-resource "kubernetes_namespace" "argoapp" {
-  metadata {
-    name = "argoapp"
-  }
-}
-
-
-
-resource "kubernetes_manifest" "my_app" {
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-    metadata = {
-      name      = "my-app"
-      namespace = "argocd"
-      annotations = {
-        "argocd-image-updater.argoproj.io/image-list"                         = "my-image=${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.image_name}"
-        "argocd-image-updater.argoproj.io/my-image.update-strategy"          = "newest-build"
-        "argocd-image-updater.argoproj.io/my-image.allow-tags"               = "regexp:^v.*"
-        "argocd-image-updater.argoproj.io/write-back-method"                = "git:secret:argocd/git-creds"
-        "argocd-image-updater.argoproj.io/write-back-target"                = "helmvalues:/k8s/values.yaml"
-        "argocd-image-updater.argoproj.io/my-image.helm.image-spec"         = "image.tag"
-        "argocd-image-updater.argoproj.io/git-repository"                   = "git@github.com:mina-safwat-1/test_argo.git"
-        "argocd-image-updater.argoproj.io/git-branch"                       = "main"
-      }
-    }
-    spec = {
-      destination = {
-        namespace = "argoapp"
-        server    = "https://kubernetes.default.svc"
-      }
-      source = {
-        repoURL        = "https://github.com/mina-safwat-1/test_argo.git"
-        path           = "k8s"
-        targetRevision = "HEAD"
-      }
-      project = "default"
-      syncPolicy = {
-        automated = {
-          prune    = true
-          selfHeal = true
-        }
-        syncOptions = [
-          "Validate=true",
-          "CreateNamespace=false",
-          "PrunePropagationPolicy=foreground",
-          "PruneLast=true"
-        ]
-      }
-    }
-  }
-
-    depends_on = [kubernetes_secret.git_creds, helm_release.argocd_image_updater, helm_release.argocd, kubernetes_namespace.argoapp]
-}
 
 
 
 
 
-
-data "aws_lb" "app_alb" {
-
-  tags = {
-    "ingress.k8s.aws/stack" = "itiproject-alb"
-  }
-
-  depends_on = [ null_resource.wait_for_alb ]
-
-}
-
-
-resource "aws_route53_record" "app" {
-  zone_id = var.zone_id
-  name    = "www.itiproject.site"
-  type    = "A"
-
-  alias {
-    name                   = data.aws_lb.app_alb.dns_name
-    zone_id                = data.aws_lb.app_alb.zone_id
-    evaluate_target_health = true
-  }
-  depends_on = [ data.aws_lb.app_alb ]
-}

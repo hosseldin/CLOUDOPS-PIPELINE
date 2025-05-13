@@ -37,13 +37,6 @@ variable "account_id" {
 }
 
 
-variable "image_name" {
-    description = "The name of the Docker image to be updated."
-    type        = string
-    default     = "node-app-jenkins"
-  
-}
-
 
 variable "sshPrivateKey_path" {
     description = "Path to the SSH private key for accessing the Git repository."
