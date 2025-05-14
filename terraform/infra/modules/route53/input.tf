@@ -10,3 +10,11 @@ variable "subdomains" {
   ]
   
 }
+
+
+variable "domain_name" {
+    description = "The domain name to create the record for"
+    type        = string
+    default     = "itiproject.site"
+  
+}

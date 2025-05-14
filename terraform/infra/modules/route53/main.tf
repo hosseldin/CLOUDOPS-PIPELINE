@@ -1,6 +1,6 @@
 
 resource "aws_route53_zone" "main" {
-  name = "itiproject.site"
+  name = var.domain_name
 }
 
 
@@ -30,9 +30,3 @@ resource "aws_route53_record" "cert_validation" {
   records = [each.value.record]
   ttl     = 300
 }
-
-
-# resource "aws_acm_certificate_validation" "itiproject" {
-#   certificate_arn         = aws_acm_certificate.itiproject_cert.arn
-#   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
-# }
