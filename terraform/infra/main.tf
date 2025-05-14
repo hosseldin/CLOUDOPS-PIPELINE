@@ -1,15 +1,16 @@
 
 data "aws_caller_identity" "current" {}
 
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 
 module "vpc" {
   source = "./modules/vpc"
 }
 
-module "iam" {
-  source               = "./modules/iam"
-  aws_eks_cluster_name = module.eks.cluster_name
-}
+
 
 module "eks" {
   source             = "./modules/eks"
