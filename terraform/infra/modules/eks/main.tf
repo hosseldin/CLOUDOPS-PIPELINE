@@ -1,7 +1,7 @@
 resource "aws_eks_cluster" "eks" {
-  name     = "eks-cluster"
-  role_arn = var.cluster_role_arn
-  version  = "1.28"
+  name     = var.eks_cluster_name
+  role_arn = aws_iam_role.eks_cluster.arn
+  version  = var.eks_version
 
   bootstrap_self_managed_addons = true
 
@@ -12,10 +12,10 @@ resource "aws_eks_cluster" "eks" {
   }
 
   vpc_config {
-    subnet_ids              = var.private_subnets
+    subnet_ids              = var.vpc_subnets
     endpoint_public_access  = true
     endpoint_private_access = true
-    security_group_ids      = [aws_security_group.eks_api.id]
+    # security_group_ids      = [aws_security_group.eks_api.id]
   }
 
   tags = {
@@ -26,9 +26,6 @@ resource "aws_eks_cluster" "eks" {
         }
 
 
-  depends_on = [var.cluster_role_arn]
-
-
   provisioner "local-exec" {
     command = <<EOT
       aws eks update-kubeconfig --name ${self.name} --region ${var.region}
@@ -36,39 +33,40 @@ resource "aws_eks_cluster" "eks" {
   }
 }
 
+
 resource "aws_eks_node_group" "nodes" {
   cluster_name    = aws_eks_cluster.eks.name
-  node_group_name = "eks-node-group"
-  node_role_arn   = var.node_role_arn
-  subnet_ids      = var.private_subnets
+  node_group_name = var.eks_node_group_name
+  node_role_arn   = aws_iam_role.eks_nodes.arn
+  subnet_ids      = var.vpc_subnets
 
   scaling_config {
-    desired_size = 4
-    max_size     = 4
-    min_size     = 1
+    desired_size = var.desired_size_node_group
+    max_size     = var.max_size_node_group
+    min_size     = var.min_size_node_group
   }
 
-  instance_types = ["t3.medium"]
+  instance_types = [var.instance_type]
 }
 
-resource "aws_security_group" "eks_api" {
-  vpc_id = var.vpc_id
+# resource "aws_security_group" "eks_api" {
+#   vpc_id = var.vpc_id
 
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
+#   ingress {
+#     from_port   = 443
+#     to_port     = 443
+#     protocol    = "tcp"
+#     cidr_blocks = [var.vpc_cidr]
+#   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"  # all protocols
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-}
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"  # all protocols
+#     cidr_blocks = ["0.0.0.0/0"]
+#     description = "Allow all outbound traffic"
+#   }
+# }
 
 
 data "tls_certificate" "eks" {
@@ -81,13 +79,4 @@ resource "aws_iam_openid_connect_provider" "oidc_provider" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
   url             = aws_eks_cluster.eks.identity[0].oidc[0].issuer
-}
-
-
-output "oidc_provider_url" {
-  value = aws_iam_openid_connect_provider.oidc_provider.url
-}
-
-output "eks_cluster_endpoint" {
-  value = aws_eks_cluster.eks.endpoint
 }
