@@ -7,13 +7,7 @@ resource "aws_route53_zone" "main" {
 resource "aws_acm_certificate" "itiproject_cert" {
   domain_name               = "itiproject.site"
   validation_method         = "DNS"
-  subject_alternative_names = [
-    "grafana.itiproject.site",
-    "jenkins.itiproject.site",
-    "sonarqube.itiproject.site",
-    "argocd.itiproject.site",
-    "www.itiproject.site"
-  ]
+  subject_alternative_names = var.subdomains
 
   tags = {
     Name = "itiproject-multi-cert"
